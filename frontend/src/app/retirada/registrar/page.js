@@ -179,7 +179,7 @@ export default function RegistrarRetiradaPage() {
 
           <form onSubmit={handleSubmit}>
             {/* Seleção de Beneficiário */}
-            <div className={styles.section}>
+            <div className={styles.section} data-tour="retirada-beneficiario">
               <h2>Beneficiário</h2>
               <div className={styles.searchBox}>
                 <input
@@ -217,7 +217,7 @@ export default function RegistrarRetiradaPage() {
                     <strong>Beneficiário selecionado:</strong> {selectedBeneficiary.nomeCompleto}
                   </div>
                   {limitInfo && (
-                    <div style={{ marginTop: '10px', padding: '10px', background: '#f0f0f0', borderRadius: '5px' }}>
+                    <div data-tour="retirada-limite" style={{ marginTop: '10px', padding: '10px', background: '#f0f0f0', borderRadius: '5px' }}>
                       <div><strong>Limite mensal:</strong> {limitInfo.itemsWithdrawnThisMonth || 0}/{limitInfo.monthlyLimit || 'N/A'} itens retirados este mês</div>
                       <div><strong>Restante:</strong> {limitInfo.remainingItems || 0} itens</div>
                       {limitInfo.remainingItems !== null && limitInfo.remainingItems < totalItems && (
@@ -232,7 +232,7 @@ export default function RegistrarRetiradaPage() {
             </div>
 
             {/* Seleção de Itens */}
-            <div className={styles.section}>
+            <div className={styles.section} data-tour="retirada-itens">
               <h2>Itens</h2>
               <div className={styles.searchBox}>
                 <input
@@ -326,6 +326,7 @@ export default function RegistrarRetiradaPage() {
                 type="submit"
                 disabled={loading || !selectedBeneficiary || selectedItems.length === 0}
                 className={styles.submitButton}
+                data-tour="retirada-registrar"
               >
                 {loading ? "Registrando..." : "Registrar Retirada"}
               </button>

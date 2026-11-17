@@ -53,7 +53,7 @@ export default function Navigation() {
                 <div className={styles.logoText}></div>
             </div>
             <div className={styles.sectionTitle}>MENU</div>
-            <nav className={styles.menuSection}>
+            <nav className={styles.menuSection} data-tour="nav-menu">
                 <Link
                     href="/home"
                     className={`${styles.menuItem} ${isActive("/home") ? styles.active : ""}`}
@@ -62,36 +62,42 @@ export default function Navigation() {
                 </Link>
                 <Link
                     href="/estoque"
+                    data-tour="nav-estoque"
                     className={`${styles.menuItem} ${isActive("/estoque") ? styles.active : ""}`}
                 >
                     {menuIcons.Estoque} Estoque
                 </Link>
                 <Link
                     href="/doacao/lista"
+                    data-tour="nav-doacoes"
                     className={`${styles.menuItem} ${isActive("/doacao") ? styles.active : ""}`}
                 >
                     <FaHandHoldingHeart /> Doações
                 </Link>
                 <Link
                     href="/demandas"
+                    data-tour="nav-demandas"
                     className={`${styles.menuItem} ${isActive("/demandas") ? styles.active : ""}`}
                 >
                     <FaBullhorn /> Demandas
                 </Link>
                 <Link
                     href="/retirada"
+                    data-tour="nav-retirada"
                     className={`${styles.menuItem} ${isActive("/retirada") ? styles.active : ""}`}
                 >
                     {menuIcons.Retirada} Retirada
                 </Link>
                 <Link
                     href="/cadastrodoador/lista"
+                    data-tour="nav-doadores"
                     className={`${styles.menuItem} ${isActive("/cadastrodoador") ? styles.active : ""}`}
                 >
                     {menuIcons.Doadores} Doadores
                 </Link>
                 <Link
                     href="/cadastrobeneficiario/lista"
+                    data-tour="nav-beneficiarios"
                     className={`${styles.menuItem} ${isActive("/cadastrobeneficiario") ? styles.active : ""}`}
                 >
                     {menuIcons.Beneficiários} Beneficiários
@@ -125,6 +131,7 @@ export default function Navigation() {
                 </Link>
                 <Link
                     href="/ajuda"
+                    data-tour="nav-ajuda"
                     className={`${styles.menuItem} ${isActive("/ajuda") ? styles.active : ""}`}
                 >
                     {menuIcons.Ajuda} Ajuda

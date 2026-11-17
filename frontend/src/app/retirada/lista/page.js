@@ -471,14 +471,14 @@ export default function ListaRetiradasPage() {
 
           <div className={styles.pageHeader}>
             <h1 className={styles.titulo}>Retiradas Registradas</h1>
-            <button className={styles.addButton} onClick={handleAdd} title="Registrar Nova Retirada">
+            <button className={styles.addButton} data-tour="retirada-novo" onClick={handleAdd} title="Registrar Nova Retirada">
               <FaPlus />
             </button>
           </div>
           <div className={styles.decoracao}></div>
 
           {/* BARRA DE FILTROS ENVOLVIDA PELA REF */}
-          <div className={styles.filtersContainer} ref={dropdownRef}>
+          <div className={styles.filtersContainer} ref={dropdownRef} data-tour="retirada-filtros">
             <div className={`${styles.formGroup} ${styles.filterGroupText}`}>
               <input
                 type="text"
@@ -625,7 +625,7 @@ export default function ListaRetiradasPage() {
           </div>
           {/* FIM BARRA DE FILTROS */}
 
-          <div className={styles.tableWrapper}>
+          <div className={styles.tableWrapper} data-tour="retirada-tabela">
             <table className={styles.beneficiariosTable}>
               <thead>
                 <tr>

@@ -254,7 +254,7 @@ export default function ListaDoadores() {
           <div className={styles.pageHeader}>
             <h1 className={styles.titulo}>Doadores Cadastrados</h1>
             <button
-              className={styles.addButton}
+              className={styles.addButton} data-tour="doador-novo"
               onClick={handleAdd}
               title="Adicionar Novo Doador"
             >
@@ -265,7 +265,7 @@ export default function ListaDoadores() {
           <div className={styles.decoracao}></div>
 
           {/* NOVO: Área de Filtros */}
-          <div className={styles.filtersContainer}>
+          <div className={styles.filtersContainer} data-tour="doador-filtros">
             <div className={`${styles.formGroup} ${styles.filterGroupText}`}>
               <input 
                 type="text" 
@@ -324,7 +324,7 @@ export default function ListaDoadores() {
             </div>}
           </div>
 
-          <div className={styles.tableWrapper}>
+          <div className={styles.tableWrapper} data-tour="doador-tabela">
             <table className={styles.beneficiariosTable}>
               <thead>
                 <tr>

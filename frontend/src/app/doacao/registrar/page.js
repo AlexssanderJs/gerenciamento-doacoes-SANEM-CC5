@@ -199,7 +199,7 @@ export default function RegistrarDoacaoPage() {
                     <div className={styles.decoracao}></div>
 
                     <form onSubmit={handleSubmit}>
-                        <div className={styles.section}>
+                        <div className={styles.section} data-tour="doacao-doador">
                             <h2>1. Selecionar Doador</h2>
                             <div className={styles.searchBox}>
                                 <input
@@ -289,7 +289,7 @@ export default function RegistrarDoacaoPage() {
                             <h2>2. Itens da Doação</h2>
 
                             <div className={styles.itemSelectionContainer}>
-                                <div className={styles.searchBox}>
+                                <div className={styles.searchBox} data-tour="doacao-buscar-item">
                                     <input
                                         type="text"
                                         placeholder="Buscar item existente no estoque..."
@@ -356,7 +356,7 @@ export default function RegistrarDoacaoPage() {
                                     <span>OU</span>
                                 </div>
 
-                                <div className={styles.newItemInputGroup}>
+                                <div className={styles.newItemInputGroup} data-tour="doacao-novo-item">
                                     <input
                                         type="text"
                                         placeholder="Nome do novo item..."
@@ -489,6 +489,7 @@ export default function RegistrarDoacaoPage() {
                             <button
                                 type="submit"
                                 className={styles.submitButton}
+                                data-tour="doacao-registrar"
                                 disabled={
                                     submitting ||
                                     !selectedDonor ||

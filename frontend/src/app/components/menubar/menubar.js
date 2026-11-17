@@ -6,12 +6,15 @@ import authService from '../../../services/authService';
 import { useRouter } from 'next/navigation';
 import { useNotification } from '../../../components/notifications/NotificationProvider';
 import NotificationBell from '../../../components/notifications/NotificationBell';
+import { useOnboarding } from '../../../components/onboarding/OnboardingProvider';
+import { FaRoute } from 'react-icons/fa';
 
 export default function MenuBar({ hasNotification }) {
   const [userName, setUserName] = useState('Usuário');
   const [userId, setUserId] = useState(null);
   const router = useRouter();
   const { showNotification } = useNotification();
+  const { startTourForCurrentPage } = useOnboarding();
 
   useEffect(() => {
     const user = authService.getUser();
@@ -37,6 +40,16 @@ export default function MenuBar({ hasNotification }) {
           <span className={styles.userName}>{userName}</span>
           <span className={styles.arrowDown}>▼</span>
         </div>
+        <button
+          type="button"
+          className={styles.tourButton}
+          onClick={startTourForCurrentPage}
+          data-tour="tour-button"
+          title="Ver o passo a passo desta tela"
+        >
+          <FaRoute aria-hidden="true" />
+          <span>Tour</span>
+        </button>
         <NotificationBell />
         <div className={styles.iconWrapper} onClick={handleLogout} title="Sair">
           <LogoutIcon />

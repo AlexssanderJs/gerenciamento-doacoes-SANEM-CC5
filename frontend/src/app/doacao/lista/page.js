@@ -363,14 +363,14 @@ export default function ListaDoacoesPage() {
 
                     <div className={styles.pageHeader}>
                         <h1 className={styles.titulo}>Doações Registradas</h1>
-                        <button className={styles.addButton} onClick={handleAdd} title="Registrar Nova Doação">
+                        <button className={styles.addButton} data-tour="doacao-novo" onClick={handleAdd} title="Registrar Nova Doação">
                             <FaPlus />
                         </button>
                     </div>
                     <div className={styles.decoracao}></div>
 
                     {/* BARRA DE FILTROS ENVOLVIDA PELA REF */}
-                    <div className={styles.filtersContainer} ref={dropdownRef}>
+                    <div className={styles.filtersContainer} ref={dropdownRef} data-tour="doacao-filtros">
                         <div className={`${styles.formGroup} ${styles.filterGroupText}`}>
                             <input
                                 type="text"
@@ -517,7 +517,7 @@ export default function ListaDoacoesPage() {
                     </div>
                     {/* FIM BARRA DE FILTROS */}
 
-                    <div className={styles.tableWrapper}>
+                    <div className={styles.tableWrapper} data-tour="doacao-tabela">
                         <table className={styles.dataTable}>
                             <thead>
                                 <tr>

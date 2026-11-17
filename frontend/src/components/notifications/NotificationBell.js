@@ -123,7 +123,7 @@ export default function NotificationBell() {
   const badgeLabel = unreadCount > 99 ? "99+" : String(unreadCount);
 
   return (
-    <div className={styles.wrapper} ref={wrapperRef}>
+    <div className={styles.wrapper} ref={wrapperRef} data-tour="notificacoes">
       <button
         type="button"
         className={styles.bellButton}

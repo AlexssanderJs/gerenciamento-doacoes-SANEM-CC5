@@ -30,6 +30,7 @@
 | RNF05 | A interface deve possuir boa acessibilidade |
 | RNF06 | O sistema deve estar disponível durante os horários de funcionamento do brechó |
 | RNF07 | O sistema deve realizar backup automático diário do banco de dados, com possibilidade de restauração em caso de falha |
+| RNF11 | A interface gráfica deve ser de fácil operacionalização para voluntários sem treinamento avançado, com tour guiado das principais operações e dicas iniciais |
 
 ---
 
