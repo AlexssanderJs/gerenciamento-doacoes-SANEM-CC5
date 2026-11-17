@@ -19,7 +19,7 @@ public class AuthService {
   private final JwtService jwtService;
 
   public LoginResponseDTO authenticate(LoginRequestDTO loginRequest) {
-      AppUser user = appUserRepository.findByLogin(loginRequest.getLogin())
+      AppUser user = appUserRepository.findByLoginAndDeletedAtIsNull(loginRequest.getLogin())
           .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
       if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPasswordHash())) {
@@ -43,9 +43,12 @@ public class AuthService {
 
   public AppUser getCurrentUser() {
       var auth = SecurityContextHolder.getContext().getAuthentication();
+      if (auth == null || auth.getName() == null) {
+          throw new RuntimeException("Usuário não autenticado");
+      }
       String login = auth.getName();
-    return appUserRepository.findByLogin(login)
-        .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+      return appUserRepository.findByLoginAndDeletedAtIsNull(login)
+          .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
   }
 
   public boolean validateToken(String token) {

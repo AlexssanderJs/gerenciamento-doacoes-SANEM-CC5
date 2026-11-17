@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import Link from "next/link";
 import styles from "./page.module.css";
 import { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
@@ -67,7 +68,9 @@ export default function Login() {
           </button>
         </form>
         {error && <div className={styles.errorMsg}>{error}</div>}
-        <a href="#" className={styles.forgot}>Esqueci minha senha</a>
+        <Link href="/esqueci-minha-senha" className={styles.forgot}>
+          Esqueci minha senha
+        </Link>
       </div>
     </div>
   );

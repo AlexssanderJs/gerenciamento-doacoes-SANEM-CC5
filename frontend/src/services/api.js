@@ -150,6 +150,17 @@ class ApiService {
     }
 
     // Métodos para Usuários
+    async getMyProfile() {
+        return this.request("/user/me")
+    }
+
+    async changeMyPassword(passwordData) {
+        return this.request("/user/me/password", {
+            method: "PATCH",
+            body: JSON.stringify(passwordData)
+        })
+    }
+
     async getUsers() {
         return this.request("/user/all")
     }
