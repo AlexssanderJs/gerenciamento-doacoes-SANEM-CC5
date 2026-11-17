@@ -14,16 +14,13 @@ public class ItemDTOMapper {
                 item.getDescription(),
                 item.getStockQuantity(),
                 item.getTagCode(),
-<<<<<<< HEAD
                 item.getMinimumStock(),
-                item.isLowStock()
-=======
+                item.isLowStock(),
                 item.getSize(),
                 item.getGender(),
                 item.getType(),
                 item.getConditionStatus(),
                 item.getLocation()
->>>>>>> origin/main
         );
     }
 }

@@ -13,11 +13,10 @@ public record ItemFormDTO(
         @JsonProperty("tagCode")
         String tagCode,
 
-<<<<<<< HEAD
         @JsonProperty("minimumStock")
         @PositiveOrZero(message = "O estoque mínimo não pode ser negativo.")
-        Long minimumStock
-=======
+        Long minimumStock,
+
         @JsonProperty("size")
         String size,
 
@@ -32,6 +31,5 @@ public record ItemFormDTO(
 
         @JsonProperty("location")
         String location
->>>>>>> origin/main
 ) {
 }

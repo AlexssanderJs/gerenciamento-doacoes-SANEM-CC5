@@ -171,7 +171,6 @@ public class ItemService {
             return predicates;
         };
 
-<<<<<<< HEAD
         // RF19: somente itens com mínimo configurado e saldo <= mínimo
         Specification<Item> lowStockSpecification = (root, query, criteriaBuilder) -> {
             if (!Boolean.TRUE.equals(itemFilterDTO.lowStock())) {
@@ -181,7 +180,8 @@ public class ItemService {
                 criteriaBuilder.isNotNull(root.get("minimumStock")),
                 criteriaBuilder.lessThanOrEqualTo(root.get("stockQuantity"), root.get("minimumStock"))
             );
-=======
+        };
+
         Specification<Item> attributeSpecification = (root, query, criteriaBuilder) -> {
             var predicates = criteriaBuilder.conjunction();
             if (hasValue(itemFilterDTO.size())) {
@@ -200,16 +200,12 @@ public class ItemService {
                 predicates = criteriaBuilder.and(predicates, criteriaBuilder.equal(root.get("location"), itemFilterDTO.location()));
             }
             return predicates;
->>>>>>> origin/main
         };
 
         return Specification.where(searchSpecification)
                 .and(quantitySpecification)
-<<<<<<< HEAD
                 .and(lowStockSpecification)
-=======
                 .and(attributeSpecification)
->>>>>>> origin/main
                 .and(notDeletedSpecification);
     }
 

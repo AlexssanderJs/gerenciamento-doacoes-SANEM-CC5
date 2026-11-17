@@ -7,11 +7,7 @@ import { useRouter } from 'next/navigation';
 import apiService from '../../services/api';
 import { mapItemFromBackend, mapItemToBackend } from '../../services/dataMapper';
 import { useApiList } from '../../hooks/useApi';
-<<<<<<< HEAD
-import { FaPlus, FaPrint, FaTag, FaEdit, FaTrash, FaExclamationTriangle } from 'react-icons/fa';
-=======
-import { FaPlus, FaPrint, FaTag, FaEdit, FaTrash, FaFilter } from 'react-icons/fa';
->>>>>>> origin/main
+import { FaPlus, FaPrint, FaTag, FaEdit, FaTrash, FaExclamationTriangle, FaFilter } from 'react-icons/fa';
 import { useNotification } from '../../components/notifications/NotificationProvider';
 import ConfirmationModal from '../../components/confirmation/ConfirmationModal';
 
@@ -20,21 +16,13 @@ export default function EstoquePage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
-<<<<<<< HEAD
-  const emptyProduto = { nome: '', quantidade: '', tagCode: '', estoqueMinimo: '' };
-  const [novoProduto, setNovoProduto] = useState(emptyProduto);
-  const [editProduto, setEditProduto] = useState(emptyProduto);
-  const [editingItem, setEditingItem] = useState(null);
-  const [filters, setFilters] = useState({ searchTerm: '', minQuantity: '', maxQuantity: '', lowStock: false });
-  const [lowStockCount, setLowStockCount] = useState(0);
-=======
-  const emptyItem = { nome: '', quantidade: '', tagCode: '', size: '', gender: '', type: '', conditionStatus: '', location: 'Medianeira' };
+  const emptyItem = { nome: '', quantidade: '', tagCode: '', estoqueMinimo: '', size: '', gender: '', type: '', conditionStatus: '', location: 'Medianeira' };
   const [novoProduto, setNovoProduto] = useState(emptyItem);
   const [editProduto, setEditProduto] = useState(emptyItem);
   const [editingItem, setEditingItem] = useState(null);
-  const [filters, setFilters] = useState({ searchTerm: '', minQuantity: '', maxQuantity: '', size: '', gender: '', type: '', conditionStatus: '', location: '' });
+  const [filters, setFilters] = useState({ searchTerm: '', minQuantity: '', maxQuantity: '', lowStock: false, size: '', gender: '', type: '', conditionStatus: '', location: '' });
+  const [lowStockCount, setLowStockCount] = useState(0);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
->>>>>>> origin/main
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const router = useRouter();
 
@@ -77,6 +65,11 @@ export default function EstoquePage() {
     if (filters.minQuantity) activeFilters.minQuantity = filters.minQuantity;
     if (filters.maxQuantity) activeFilters.maxQuantity = filters.maxQuantity;
     if (filters.lowStock) activeFilters.lowStock = true;
+    if (filters.size) activeFilters.size = filters.size;
+    if (filters.gender) activeFilters.gender = filters.gender;
+    if (filters.type) activeFilters.type = filters.type;
+    if (filters.conditionStatus) activeFilters.conditionStatus = filters.conditionStatus;
+    if (filters.location) activeFilters.location = filters.location;
     return activeFilters;
   }
 
@@ -94,29 +87,11 @@ export default function EstoquePage() {
   }, [filters.searchTerm]);
 
   useEffect(() => {
-<<<<<<< HEAD
     reloadItems().catch(err => {
       console.error("Erro ao carregar itens filtrados:", err);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, filters.minQuantity, filters.maxQuantity, filters.lowStock]);
-=======
-    const activeFilters = {};
-    if (debouncedSearch) activeFilters.searchTerm = debouncedSearch;
-    if (filters.minQuantity) activeFilters.minQuantity = filters.minQuantity;
-    if (filters.maxQuantity) activeFilters.maxQuantity = filters.maxQuantity;
-    if (filters.size) activeFilters.size = filters.size;
-    if (filters.gender) activeFilters.gender = filters.gender;
-    if (filters.type) activeFilters.type = filters.type;
-    if (filters.conditionStatus) activeFilters.conditionStatus = filters.conditionStatus;
-    if (filters.location) activeFilters.location = filters.location;
-
-    loadDataRaw(activeFilters).catch(err => {
-      console.error("Erro ao carregar itens filtrados:", err);
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, filters.minQuantity, filters.maxQuantity, filters.size, filters.gender, filters.type, filters.conditionStatus, filters.location]);
->>>>>>> origin/main
+  }, [debouncedSearch, filters.minQuantity, filters.maxQuantity, filters.lowStock, filters.size, filters.gender, filters.type, filters.conditionStatus, filters.location]);
 
   async function handleAddProduto(e) {
     e.preventDefault();
@@ -127,25 +102,18 @@ export default function EstoquePage() {
         description: novoProduto.nome || '',
         stockQuantity: Number(novoProduto.quantidade) || 0,
         tagCode: novoProduto.tagCode?.trim() ? novoProduto.tagCode.trim() : null,
-<<<<<<< HEAD
-        minimumStock: novoProduto.estoqueMinimo === '' ? null : Number(novoProduto.estoqueMinimo)
-=======
+        minimumStock: novoProduto.estoqueMinimo === '' ? null : Number(novoProduto.estoqueMinimo),
         size: novoProduto.size || null,
         gender: novoProduto.gender || null,
         type: novoProduto.type || null,
         conditionStatus: novoProduto.conditionStatus || null,
         location: novoProduto.location || null
->>>>>>> origin/main
       };
       
       await apiService.createItem(itemData);
       await reloadItems();
-      
-<<<<<<< HEAD
-      setNovoProduto(emptyProduto);
-=======
+
       setNovoProduto(emptyItem);
->>>>>>> origin/main
       setShowAddModal(false);
       showNotification("Produto adicionado com sucesso!", "success");
     } catch (err) {
@@ -175,15 +143,12 @@ export default function EstoquePage() {
       nome: item.nome || '',
       quantidade: item.quantidade || '',
       tagCode: item.tagCode || '',
-<<<<<<< HEAD
-      estoqueMinimo: item.estoqueMinimo ?? ''
-=======
+      estoqueMinimo: item.estoqueMinimo ?? '',
       size: item.size || '',
       gender: item.gender || '',
       type: item.type || '',
       conditionStatus: item.conditionStatus || '',
       location: item.location || ''
->>>>>>> origin/main
     });
     setEditingItem(item);
     setShowEditModal(true);
@@ -199,25 +164,18 @@ export default function EstoquePage() {
         nome: editProduto.nome || '',
         quantidade: Number(editProduto.quantidade) || 0,
         tagCode: editProduto.tagCode,
-<<<<<<< HEAD
-        estoqueMinimo: editProduto.estoqueMinimo
-=======
+        estoqueMinimo: editProduto.estoqueMinimo,
         size: editProduto.size,
         gender: editProduto.gender,
         type: editProduto.type,
         conditionStatus: editProduto.conditionStatus,
         location: editProduto.location
->>>>>>> origin/main
       });
       
       await apiService.updateItem(editingItem.id, itemData);
       await reloadItems();
-      
-<<<<<<< HEAD
-      setEditProduto(emptyProduto);
-=======
+
       setEditProduto(emptyItem);
->>>>>>> origin/main
       setShowEditModal(false);
       setEditingItem(null);
       showNotification("Produto atualizado com sucesso!", "success");
@@ -350,25 +308,6 @@ export default function EstoquePage() {
                 onChange={(e) => setFilters(prev => ({ ...prev, searchTerm: e.target.value }))}
               />
             </div>
-<<<<<<< HEAD
-            <div className={`${styles.formGroup} ${styles.filterGroupNumber}`}>
-              <input 
-                type="number" 
-                placeholder="Qtd Min." 
-                min="0"
-                value={filters.minQuantity}
-                onChange={(e) => setFilters(prev => ({ ...prev, minQuantity: e.target.value }))}
-              />
-            </div>
-            <div className={`${styles.formGroup} ${styles.filterGroupNumber}`}>
-              <input 
-                type="number" 
-                placeholder="Qtd Máx." 
-                min="0"
-                value={filters.maxQuantity}
-                onChange={(e) => setFilters(prev => ({ ...prev, maxQuantity: e.target.value }))}
-              />
-            </div>
             <label className={styles.lowStockFilter}>
               <input
                 type="checkbox"
@@ -377,20 +316,12 @@ export default function EstoquePage() {
               />
               Somente estoque baixo
             </label>
-            <button 
-              className={`${styles.cancelButton} ${styles.clearFilterButton}`} 
-              onClick={() => {
-                setFilters({ searchTerm: '', minQuantity: '', maxQuantity: '', lowStock: false });
-                setDebouncedSearch('');
-              }}
-=======
             <button
               type="button"
               className={styles.advancedFiltersButton}
               onClick={() => setShowAdvancedFilters(prev => !prev)}
               aria-expanded={showAdvancedFilters}
               aria-controls="advanced-stock-filters"
->>>>>>> origin/main
             >
               <FaFilter aria-hidden="true" />
               <span>Avançado</span>
@@ -444,7 +375,7 @@ export default function EstoquePage() {
                   <button
                     className={`${styles.cancelButton} ${styles.clearFilterButton}`}
                     onClick={() => {
-                      setFilters({ searchTerm: '', minQuantity: '', maxQuantity: '', size: '', gender: '', type: '', conditionStatus: '', location: '' });
+                      setFilters({ searchTerm: '', minQuantity: '', maxQuantity: '', lowStock: false, size: '', gender: '', type: '', conditionStatus: '', location: '' });
                       setDebouncedSearch('');
                     }}
                   >
@@ -479,11 +410,7 @@ export default function EstoquePage() {
                   </tr>
                 ) : mockEstoque.length === 0 ? (
                   <tr>
-<<<<<<< HEAD
                     <td colSpan={6} className={styles.noDataMessage}>{filters.lowStock ? 'Nenhum item com estoque baixo.' : 'Nenhum produto cadastrado ainda.'}</td>
-=======
-                    <td colSpan={6} className={styles.noDataMessage}>Nenhum produto cadastrado ainda.</td>
->>>>>>> origin/main
                   </tr>
                 ) : (
                   mockEstoque.map(item => (
@@ -586,22 +513,21 @@ export default function EstoquePage() {
                   onChange={e => setNovoProduto({ ...novoProduto, quantidade: e.target.value })} 
                 />
               </div>
-<<<<<<< HEAD
               <div className={styles.formGroup}>
                 <label htmlFor="estoqueMinimo">Estoque mínimo (opcional)</label>
-                <input 
+                <input
                   id="estoqueMinimo"
-                  type="number" 
+                  type="number"
                   min={0}
-                  value={novoProduto.estoqueMinimo} 
-                  onChange={e => setNovoProduto({ ...novoProduto, estoqueMinimo: e.target.value })} 
+                  value={novoProduto.estoqueMinimo}
+                  onChange={e => setNovoProduto({ ...novoProduto, estoqueMinimo: e.target.value })}
                   placeholder="Ex: 5 — avisa quando o saldo chegar a esse valor"
                   aria-describedby="estoqueMinimoHelp"
                 />
                 <small id="estoqueMinimoHelp" className={styles.fieldHelp}>
                   Administradores e atendentes serão notificados quando a quantidade atingir ou ficar abaixo deste valor. Deixe em branco para não monitorar.
                 </small>
-=======
+              </div>
               <div className={styles.itemAttributesGrid}>
                 <div className={styles.formGroup}>
                   <label htmlFor="size">Tamanho</label>
@@ -631,7 +557,6 @@ export default function EstoquePage() {
                   <label htmlFor="location">Localização</label>
                   <input id="location" type="text" value={novoProduto.location} onChange={e => setNovoProduto({ ...novoProduto, location: e.target.value })} />
                 </div>
->>>>>>> origin/main
               </div>
               <div className={styles.modalActions}>
                 <button 
@@ -691,22 +616,21 @@ export default function EstoquePage() {
                   onChange={e => setEditProduto({ ...editProduto, quantidade: e.target.value })} 
                 />
               </div>
-<<<<<<< HEAD
               <div className={styles.formGroup}>
                 <label htmlFor="editEstoqueMinimo">Estoque mínimo (opcional)</label>
-                <input 
+                <input
                   id="editEstoqueMinimo"
-                  type="number" 
+                  type="number"
                   min={0}
-                  value={editProduto.estoqueMinimo} 
-                  onChange={e => setEditProduto({ ...editProduto, estoqueMinimo: e.target.value })} 
+                  value={editProduto.estoqueMinimo}
+                  onChange={e => setEditProduto({ ...editProduto, estoqueMinimo: e.target.value })}
                   placeholder="Ex: 5 — avisa quando o saldo chegar a esse valor"
                   aria-describedby="editEstoqueMinimoHelp"
                 />
                 <small id="editEstoqueMinimoHelp" className={styles.fieldHelp}>
                   Administradores e atendentes serão notificados quando a quantidade atingir ou ficar abaixo deste valor. Deixe em branco para não monitorar.
                 </small>
-=======
+              </div>
               <div className={styles.itemAttributesGrid}>
                 <div className={styles.formGroup}>
                   <label htmlFor="editSize">Tamanho</label>
@@ -736,7 +660,6 @@ export default function EstoquePage() {
                   <label htmlFor="editLocation">Localização</label>
                   <input id="editLocation" type="text" value={editProduto.location} onChange={e => setEditProduto({ ...editProduto, location: e.target.value })} />
                 </div>
->>>>>>> origin/main
               </div>
               <div className={styles.modalActions}>
                 <button 

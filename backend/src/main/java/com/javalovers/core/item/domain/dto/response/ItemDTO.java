@@ -5,16 +5,13 @@ public record ItemDTO(
         String description,
         Long stockQuantity,
         String tagCode,
-<<<<<<< HEAD
         Long minimumStock,
-        boolean lowStock
-=======
+        boolean lowStock,
         String size,
         String gender,
         String type,
         String conditionStatus,
         String location
->>>>>>> origin/main
 )
 {
 }
