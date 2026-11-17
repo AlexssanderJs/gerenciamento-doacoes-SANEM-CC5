@@ -270,6 +270,7 @@ export default function EstoquePage() {
             <h1 className={styles.titulo}>Controle de Estoque</h1>
             <button
               className={styles.addButton}
+              data-tour="estoque-adicionar"
               onClick={() => setShowAddModal(true)}
               title="Adicionar Novo Produto"
             >
@@ -299,7 +300,7 @@ export default function EstoquePage() {
             </div>
           )}
 
-          <div className={styles.filtersContainer}>
+          <div className={styles.filtersContainer} data-tour="estoque-filtros">
             <div className={`${styles.formGroup} ${styles.filterGroupText}`}>
               <input
                 type="text" 
@@ -308,7 +309,7 @@ export default function EstoquePage() {
                 onChange={(e) => setFilters(prev => ({ ...prev, searchTerm: e.target.value }))}
               />
             </div>
-            <label className={styles.lowStockFilter}>
+            <label className={styles.lowStockFilter} data-tour="estoque-baixo">
               <input
                 type="checkbox"
                 checked={filters.lowStock}
@@ -386,7 +387,7 @@ export default function EstoquePage() {
             )}
           </div>
 
-          <div className={styles.tableWrapper}>
+          <div className={styles.tableWrapper} data-tour="estoque-tabela">
             <table className={styles.beneficiariosTable}>
               <thead>
                 <tr>
@@ -440,7 +441,7 @@ export default function EstoquePage() {
                         )}
                       </td>
                       <td>{[item.type, item.size, item.gender, item.conditionStatus, item.location].filter(Boolean).join(' | ') || 'Não informado'}</td>
-                      <td className={styles.actionButtons}>
+                      <td className={styles.actionButtons} data-tour="estoque-acoes">
                         <button
                           className={styles.editButton}
                           onClick={() => handleEditProduto(item)}

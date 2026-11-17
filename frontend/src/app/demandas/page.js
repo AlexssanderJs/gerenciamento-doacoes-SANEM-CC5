@@ -188,7 +188,7 @@ export default function DemandasPage() {
         <div className={layout.listContainer}>
           <div className={layout.pageHeader}>
             <h1 className={layout.titulo}>Demandas Prioritárias</h1>
-            <button className={layout.addButton} onClick={openCreate} title="Nova demanda" aria-label="Nova demanda">
+            <button className={layout.addButton} onClick={openCreate} title="Nova demanda" aria-label="Nova demanda" data-tour="demanda-nova">
               <FaPlus />
             </button>
           </div>
@@ -199,7 +199,7 @@ export default function DemandasPage() {
           </p>
 
           {filters.status !== "INACTIVE" && (
-            <div className={styles.summary}>
+            <div className={styles.summary} data-tour="demanda-resumo">
               <div className={styles.summaryCard}>
                 <span className={styles.summaryValue}>{summary.active}</span>
                 <span className={styles.summaryLabel}>Ativas</span>
@@ -219,7 +219,7 @@ export default function DemandasPage() {
             </div>
           )}
 
-          <div className={layout.filtersContainer}>
+          <div className={layout.filtersContainer} data-tour="demanda-filtros">
             <div className={`${layout.formGroup} ${styles.filterText}`}>
               <input
                 type="text"
@@ -266,7 +266,7 @@ export default function DemandasPage() {
               )}
             </div>
           ) : (
-            <div className={styles.grid}>
+            <div className={styles.grid} data-tour="demanda-cards">
               {demands.map((d) => (
                 <article
                   key={d.priorityDemandId}

@@ -408,7 +408,7 @@ export default function ListaBeneficiarios() {
           <div className={styles.pageHeader}>
             <h1 className={styles.titulo}>Beneficiários Cadastrados</h1>
             <button
-              className={styles.addButton}
+              className={styles.addButton} data-tour="benef-novo"
               onClick={handleAdd}
               title="Adicionar Novo Beneficiário"
             >
@@ -418,7 +418,7 @@ export default function ListaBeneficiarios() {
           <div className={styles.decoracao}></div>
 
           {/* ÁREA DE FILTROS C/ REF PARA DROPDOWN */}
-          <div className={styles.filtersContainer} ref={dropdownRef}>
+          <div className={styles.filtersContainer} ref={dropdownRef} data-tour="benef-filtros">
             <div className={`${styles.formGroup} ${styles.filterGroupText}`}>
               <input 
                 type="text" 
@@ -527,7 +527,7 @@ export default function ListaBeneficiarios() {
           </div>
 
           {/* TABELA E MODAIS (Continuam iguais ao original) */}
-          <div className={styles.tableWrapper}>
+          <div className={styles.tableWrapper} data-tour="benef-tabela">
             <table className={styles.beneficiariosTable}>
               <thead>
                 <tr>
