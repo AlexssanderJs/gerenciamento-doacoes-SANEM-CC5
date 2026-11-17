@@ -21,7 +21,12 @@ const EditarItem = () => {
     nome: "",
     quantidade: "",
     tagCode: "",
-    estoqueMinimo: ""
+    estoqueMinimo: "",
+    size: "",
+    gender: "",
+    type: "",
+    conditionStatus: "",
+    location: ""
   });
 
   useEffect(() => {
@@ -35,7 +40,12 @@ const EditarItem = () => {
           quantidade: mappedItem.quantidade ?? "",
           // preservados para não serem apagados no PUT
           tagCode: mappedItem.tagCode || "",
-          estoqueMinimo: mappedItem.estoqueMinimo ?? ""
+          estoqueMinimo: mappedItem.estoqueMinimo ?? "",
+          size: mappedItem.size || "",
+          gender: mappedItem.gender || "",
+          type: mappedItem.type || "",
+          conditionStatus: mappedItem.conditionStatus || "",
+          location: mappedItem.location || ""
         });
       } catch (err) {
         console.error("Erro ao carregar item:", err);
