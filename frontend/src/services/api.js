@@ -30,7 +30,7 @@ class ApiService {
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 const apiError = new Error(
-                    errorData?.message || errorData?.error || `HTTP error! status: ${response.status}`
+                    errorData?.details || errorData?.message || errorData?.error || `HTTP error! status: ${response.status}`
                 );
                 apiError.status = response.status;
                 apiError.response = errorData;

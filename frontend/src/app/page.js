@@ -9,6 +9,8 @@ import { useApi } from "../hooks/useApi";
 import { useNotification } from "../components/notifications/NotificationProvider";
 
 export default function Login() {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const { loading, execute, clearError } = useApi();
@@ -17,25 +19,24 @@ export default function Login() {
   async function handleSubmit(e) {
     e.preventDefault();
     clearError();
+    setError("");
 
-    const form = e.target;
-    const username = form[0].value;
-    const password = form[1].value;
-
-    if (!username || !password) {
-      setError("Usuário e senha são obrigatórios.");
+    const trimmedUser = username.trim();
+    if (!trimmedUser || !password) {
+      setError("Usuário/e-mail e senha são obrigatórios.");
       return;
     }
 
     try {
-      await execute(() => authService.login(username, password));
+      await execute(() => authService.login(trimmedUser, password));
       showNotification("Login realizado com sucesso!", "success");
       setTimeout(() => {
         window.location.href = "/home";
-      }, 1000);
+      }, 500);
     } catch (err) {
-      showNotification(err.message || "Usuário ou senha incorretos", "error");
-      setError("Usuário ou senha incorretos.");
+      const message = err.message || "Usuário ou senha incorretos.";
+      showNotification(message, "error");
+      setError(message);
     }
   }
 
@@ -47,12 +48,32 @@ export default function Login() {
         </div>
         <h2 className={styles.loginTitle}>Login</h2>
         <form className={styles.loginForm} onSubmit={handleSubmit}>
-          <input type="text" placeholder="Usuário" className={styles.input} />
+          <input
+            id="username"
+            name="username"
+            type="text"
+            placeholder="Usuário ou e-mail"
+            value={username}
+            onChange={(e) => {
+              setUsername(e.target.value);
+              setError("");
+            }}
+            className={styles.input}
+            autoComplete="username"
+          />
           <div className={styles.passwordWrapper}>
             <input
+              id="password"
+              name="password"
               type={showPassword ? "text" : "password"}
               placeholder="Senha"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setError("");
+              }}
               className={styles.input}
+              autoComplete="current-password"
             />
             <button
               type="button"

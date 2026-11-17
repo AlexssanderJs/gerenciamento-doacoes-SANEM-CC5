@@ -19,11 +19,13 @@ public class AuthService {
   private final JwtService jwtService;
 
   public LoginResponseDTO authenticate(LoginRequestDTO loginRequest) {
-      AppUser user = appUserRepository.findByLoginAndDeletedAtIsNull(loginRequest.getLogin())
-          .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+      String identifier = loginRequest.getLogin() != null ? loginRequest.getLogin().trim() : "";
+      AppUser user = appUserRepository.findByLoginAndDeletedAtIsNull(identifier)
+          .or(() -> appUserRepository.findByEmailIgnoreCaseAndDeletedAtIsNull(identifier))
+          .orElseThrow(() -> new RuntimeException("Usuário ou senha incorretos"));
 
       if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPasswordHash())) {
-          throw new RuntimeException("Senha incorreta");
+          throw new RuntimeException("Usuário ou senha incorretos");
       }
 
       if (user.getStatus() != com.javalovers.core.status.Status.ACTIVE) {

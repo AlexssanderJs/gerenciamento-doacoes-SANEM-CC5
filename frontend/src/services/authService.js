@@ -53,6 +53,7 @@ class AuthService {
 
       if (!response.ok) {
         const message =
+          data?.details ||
           data?.message ||
           (data?.errors ? Object.values(data.errors).join('; ') : null) ||
           data?.error ||
