@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import apiService from "../../../services/api";
 import { mapBeneficiaryFromBackend, mapBeneficiaryToBackend } from "../../../services/dataMapper";
 import { useApiList } from "../../../hooks/useApi";
-import { FaPlus, FaCheck, FaTimes, FaEdit, FaTrash, FaChevronDown } from "react-icons/fa";
+import { FaPlus, FaCheck, FaTimes, FaEdit, FaTrash, FaChevronDown, FaBan, FaUndo, FaFilter } from "react-icons/fa";
 import authService from "../../../services/authService";
 import { useNotification } from "../../../components/notifications/NotificationProvider";
 import ConfirmationModal from "../../../components/confirmation/ConfirmationModal";
@@ -36,6 +36,7 @@ export default function ListaBeneficiarios() {
   // --- LÓGICA DE FILTROS ---
   const [filters, setFilters] = useState({ name: '', cpfCnpj: '', phone: '', status: '' });
   const [debouncedFilters, setDebouncedFilters] = useState({ name: '', cpfCnpj: '', phone: '', status: '' });
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   
   // Estados para o Dropdown Customizado de Status
   const [activeDropdown, setActiveDropdown] = useState(null);
@@ -45,7 +46,8 @@ export default function ListaBeneficiarios() {
   const statusOptions = [
     { value: 'PENDING', label: 'Pendente' },
     { value: 'APPROVED', label: 'Aprovado' },
-    { value: 'REJECTED', label: 'Rejeitado' }
+    { value: 'REJECTED', label: 'Rejeitado' },
+    { value: 'INACTIVE', label: 'Inativo' }
   ];
 
   const {
@@ -204,6 +206,37 @@ export default function ListaBeneficiarios() {
     });
   };
 
+  const handleInactivate = async (id) => {
+    setConfirmModal({
+      isOpen: true,
+      action: async () => {
+        setApprovingId(id);
+        try {
+          const user = authService.getUser();
+          if (!user || !user.id) { showNotification("Erro: usuário não autenticado", "error"); return; }
+          await apiService.inactivateBeneficiary(id, user.id);
+          showNotification("Beneficiário inativado com sucesso!", "success");
+          loadDataRaw();
+        } catch (err) { showNotification("Erro ao inativar beneficiário", "error");
+        } finally { setApprovingId(null); }
+      },
+      message: "Tem certeza que deseja inativar este beneficiário? Ele deixará de poder retirar itens, mas o cadastro será mantido.",
+      title: "Confirmar Inativação"
+    });
+  };
+
+  const handleReactivate = async (id) => {
+    setApprovingId(id);
+    try {
+      const user = authService.getUser();
+      if (!user || !user.id) { showNotification("Erro: usuário não autenticado", "error"); return; }
+      await apiService.reactivateBeneficiary(id, user.id);
+      showNotification("Beneficiário reativado com sucesso!", "success");
+      loadDataRaw();
+    } catch (err) { showNotification("Erro ao reativar beneficiário", "error");
+    } finally { setApprovingId(null); }
+  };
+
   const handleConfirm = async () => {
     if (confirmModal.action) await confirmModal.action();
     setConfirmModal({ isOpen: false, action: null, message: "", title: "" });
@@ -350,6 +383,7 @@ export default function ListaBeneficiarios() {
       case "PENDING": return "Pendente";
       case "APPROVED": return "Aprovado";
       case "REJECTED": return "Rejeitado";
+      case "INACTIVE": return "Inativo";
       default: return status || "N/A";
     }
   };
@@ -359,6 +393,7 @@ export default function ListaBeneficiarios() {
       case "PENDING": return styles.statusPending;
       case "APPROVED": return styles.statusApproved;
       case "REJECTED": return styles.statusRejected;
+      case "INACTIVE": return styles.statusInactive;
       default: return "";
     }
   };
@@ -373,7 +408,7 @@ export default function ListaBeneficiarios() {
           <div className={styles.pageHeader}>
             <h1 className={styles.titulo}>Beneficiários Cadastrados</h1>
             <button
-              className={styles.addButton}
+              className={styles.addButton} data-tour="benef-novo"
               onClick={handleAdd}
               title="Adicionar Novo Beneficiário"
             >
@@ -383,7 +418,7 @@ export default function ListaBeneficiarios() {
           <div className={styles.decoracao}></div>
 
           {/* ÁREA DE FILTROS C/ REF PARA DROPDOWN */}
-          <div className={styles.filtersContainer} ref={dropdownRef}>
+          <div className={styles.filtersContainer} ref={dropdownRef} data-tour="benef-filtros">
             <div className={`${styles.formGroup} ${styles.filterGroupText}`}>
               <input 
                 type="text" 
@@ -393,6 +428,17 @@ export default function ListaBeneficiarios() {
                 onChange={handleFilterChange}
               />
             </div>
+            <button
+              type="button"
+              className={styles.advancedFiltersButton}
+              onClick={() => setShowAdvancedFilters(prev => !prev)}
+              aria-expanded={showAdvancedFilters}
+              aria-controls="advanced-beneficiary-filters"
+            >
+              <FaFilter aria-hidden="true" />
+              <span>Avançado</span>
+            </button>
+            {showAdvancedFilters && <div id="advanced-beneficiary-filters" className={styles.advancedFiltersPanel}>
             <div className={`${styles.formGroup} ${styles.filterGroupText}`}>
               <input 
                 type="text" 
@@ -477,10 +523,11 @@ export default function ListaBeneficiarios() {
             >
               Limpar
             </button>
+            </div>}
           </div>
 
           {/* TABELA E MODAIS (Continuam iguais ao original) */}
-          <div className={styles.tableWrapper}>
+          <div className={styles.tableWrapper} data-tour="benef-tabela">
             <table className={styles.beneficiariosTable}>
               <thead>
                 <tr>
@@ -514,6 +561,12 @@ export default function ListaBeneficiarios() {
                             <button className={styles.approveButton} onClick={() => handleApprove(b.id)} disabled={loading || approvingId === b.id} title="Aprovar"><FaCheck /></button>
                             <button className={styles.rejectButton} onClick={() => handleReject(b.id)} disabled={loading || approvingId === b.id} title="Rejeitar"><FaTimes /></button>
                           </>
+                        )}
+                        {isAdmin && b.status === "APPROVED" && (
+                          <button className={styles.rejectButton} onClick={() => handleInactivate(b.id)} disabled={loading || approvingId === b.id} title="Inativar"><FaBan /></button>
+                        )}
+                        {isAdmin && b.status === "INACTIVE" && (
+                          <button className={styles.approveButton} onClick={() => handleReactivate(b.id)} disabled={loading || approvingId === b.id} title="Reativar"><FaUndo /></button>
                         )}
                         <button className={styles.deleteButton} onClick={() => handleDelete(b.id)} disabled={loading} title="Excluir"><FaTrash /></button>
                       </td>

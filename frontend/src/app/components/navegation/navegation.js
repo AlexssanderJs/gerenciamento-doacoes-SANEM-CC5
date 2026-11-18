@@ -16,7 +16,9 @@ import {
     FaQuestionCircle,
     FaShoppingCart,
     FaAngleDoubleLeft,
-    FaAngleDoubleRight
+    FaAngleDoubleRight,
+    FaMapMarkerAlt,
+    FaBullhorn
 } from "react-icons/fa"
 
 const menuIcons = {
@@ -99,10 +101,9 @@ export default function Navigation() {
                     {isCondensed ? <FaAngleDoubleRight /> : <FaAngleDoubleLeft />}
                 </button>
             </div>
-
             <div className={styles.scrollArea}>
                 <div className={styles.sectionTitle}>{!isCondensed ? "MENU" : ""}</div>
-                <nav className={styles.menuSection}>
+                <nav className={styles.menuSection} data-tour="nav-menu">
                     <Link
                         href="/home"
                         title="Home"
@@ -114,6 +115,7 @@ export default function Navigation() {
                     <Link
                         href="/estoque"
                         title="Estoque"
+                        data-tour="nav-estoque"
                         className={`${styles.menuItem} ${isActive("/estoque") ? styles.active : ""}`}
                     >
                         <span className={styles.menuIcon}>{menuIcons.Estoque}</span>
@@ -122,14 +124,25 @@ export default function Navigation() {
                     <Link
                         href="/doacao/lista"
                         title="Doações"
+                        data-tour="nav-doacoes"
                         className={`${styles.menuItem} ${isActive("/doacao") ? styles.active : ""}`}
                     >
                         <span className={styles.menuIcon}><FaHandHoldingHeart /></span>
                         {!isCondensed && <span className={styles.menuLabel}>Doações</span>}
                     </Link>
                     <Link
+                        href="/demandas"
+                        title="Demandas"
+                        data-tour="nav-demandas"
+                        className={`${styles.menuItem} ${isActive("/demandas") ? styles.active : ""}`}
+                    >
+                        <span className={styles.menuIcon}><FaBullhorn /></span>
+                        {!isCondensed && <span className={styles.menuLabel}>Demandas</span>}
+                    </Link>
+                    <Link
                         href="/retirada"
                         title="Retirada"
+                        data-tour="nav-retirada"
                         className={`${styles.menuItem} ${isActive("/retirada") ? styles.active : ""}`}
                     >
                         <span className={styles.menuIcon}>{menuIcons.Retirada}</span>
@@ -138,6 +151,7 @@ export default function Navigation() {
                     <Link
                         href="/cadastrodoador/lista"
                         title="Doadores"
+                        data-tour="nav-doadores"
                         className={`${styles.menuItem} ${isActive("/cadastrodoador") ? styles.active : ""}`}
                     >
                         <span className={styles.menuIcon}>{menuIcons.Doadores}</span>
@@ -146,10 +160,19 @@ export default function Navigation() {
                     <Link
                         href="/cadastrobeneficiario/lista"
                         title="Beneficiários"
+                        data-tour="nav-beneficiarios"
                         className={`${styles.menuItem} ${isActive("/cadastrobeneficiario") ? styles.active : ""}`}
                     >
                         <span className={styles.menuIcon}>{menuIcons.Beneficiários}</span>
                         {!isCondensed && <span className={styles.menuLabel}>Beneficiários</span>}
+                    </Link>
+                    <Link
+                        href="/pontoscoleta/lista"
+                        title="Pontos de Coleta"
+                        className={`${styles.menuItem} ${isActive("/pontoscoleta") ? styles.active : ""}`}
+                    >
+                        <span className={styles.menuIcon}><FaMapMarkerAlt /></span>
+                        {!isCondensed && <span className={styles.menuLabel}>Pontos de Coleta</span>}
                     </Link>
                 </nav>
 
@@ -182,6 +205,7 @@ export default function Navigation() {
                     <Link
                         href="/ajuda"
                         title="Ajuda"
+                        data-tour="nav-ajuda"
                         className={`${styles.menuItem} ${isActive("/ajuda") ? styles.active : ""}`}
                     >
                         <span className={styles.menuIcon}>{menuIcons.Ajuda}</span>

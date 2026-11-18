@@ -22,10 +22,13 @@ const EditarItem = () => {
     nome: "",
     quantidade: "",
     tagCode: "",
+    estoqueMinimo: "",
     categoriaId: "",
     tamanho: "",
     estadoConservacao: "",
-    genero: ""
+    genero: "",
+    type: "",
+    location: ""
   });
 
   useEffect(() => {
@@ -48,12 +51,15 @@ const EditarItem = () => {
         const mappedItem = mapItemFromBackend(item);
         setForm({
           nome: mappedItem.nome || "",
-          quantidade: mappedItem.quantidade !== undefined ? String(mappedItem.quantidade) : "",
+          quantidade: mappedItem.quantidade ?? "",
           tagCode: mappedItem.tagCode || "",
+          estoqueMinimo: mappedItem.estoqueMinimo ?? "",
           categoriaId: mappedItem.categoriaId ? String(mappedItem.categoriaId) : "",
           tamanho: mappedItem.tamanho || "",
           estadoConservacao: mappedItem.estadoConservacao || "",
-          genero: mappedItem.genero || ""
+          genero: mappedItem.genero || "",
+          type: mappedItem.type || "",
+          location: mappedItem.location || ""
         });
       } catch (err) {
         console.error("Erro ao carregar item:", err);
@@ -240,6 +246,49 @@ const EditarItem = () => {
                   placeholder="Quantidade" 
                 />
               </div>
+            </div>
+            <div className={styles.formRow}>
+              <div className={styles.formGroup} style={{ flex: 1 }}>
+                <label htmlFor="type"><b>Tipo (Opcional)</b></label>
+                <input
+                  id="type"
+                  name="type"
+                  className={styles.formInput}
+                  value={form.type}
+                  onChange={handleChange}
+                  placeholder="Ex: Camisa, Calça..."
+                />
+              </div>
+
+              <div className={styles.formGroup} style={{ flex: 1 }}>
+                <label htmlFor="location"><b>Localização (Opcional)</b></label>
+                <input
+                  id="location"
+                  name="location"
+                  className={styles.formInput}
+                  value={form.location}
+                  onChange={handleChange}
+                  placeholder="Ex: Medianeira"
+                />
+              </div>
+            </div>
+
+            <div className={styles.formGroup}>
+              <label htmlFor="estoqueMinimo"><b>Estoque mínimo</b></label>
+              <input 
+                id="estoqueMinimo" 
+                name="estoqueMinimo" 
+                type="number" 
+                min={0}
+                className={styles.formInput}
+                value={form.estoqueMinimo} 
+                onChange={handleChange} 
+                placeholder="Em branco = sem alerta"
+                aria-describedby="estoqueMinimoHelp"
+              />
+              <small id="estoqueMinimoHelp" className={styles.fieldHelp}>
+                Os usuários autorizados são notificados quando a quantidade atingir ou ficar abaixo deste valor.
+              </small>
             </div>
             
             <div className={styles.modalButtonGroup} style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>

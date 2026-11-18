@@ -1,12 +1,27 @@
 "use client";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useOnboarding } from "../../components/onboarding/OnboardingProvider";
+import { TOURS, TOUR_ORDER } from "../../components/onboarding/tours";
+import { useNotification } from "../../components/notifications/NotificationProvider";
 import MenuBar from '../components/menubar/menubar';
 import Navigation from '../components/navegation/navegation';
 import styles from './ajuda.module.css';
-import { FaQuestionCircle, FaChevronDown, FaChevronUp, FaHome, FaBoxes, FaShoppingCart, FaHandHoldingHeart, FaUsers, FaChartBar, FaCog, FaUser } from 'react-icons/fa';
+import { FaRoute, FaRedo, FaQuestionCircle, FaChevronDown, FaChevronUp, FaHome, FaBoxes, FaShoppingCart, FaHandHoldingHeart, FaUsers, FaChartBar, FaCog, FaUser } from 'react-icons/fa';
 
 export default function AjudaPage() {
   const [openSection, setOpenSection] = useState(null);
+  const router = useRouter();
+  const { resetTips } = useOnboarding();
+  const { showNotification } = useNotification();
+
+  // RNF11: abre a tela do tour e inicia automaticamente (?tour=1)
+  const openTour = (tour) => router.push(`${tour.path}?tour=1`);
+
+  const handleResetTips = () => {
+    resetTips();
+    showNotification("Pronto! As dicas iniciais voltarão a aparecer.", "success");
+  };
 
   const toggleSection = (section) => {
     setOpenSection(openSection === section ? null : section);
@@ -178,6 +193,35 @@ export default function AjudaPage() {
             Clique em cada seção para expandir e ver os detalhes.
           </p>
 
+          <section className={styles.toursSection} aria-labelledby="toursTitle">
+            <div className={styles.toursHeader}>
+              <h2 id="toursTitle" className={styles.toursTitle}>
+                <FaRoute aria-hidden="true" /> Tours guiados
+              </h2>
+              <button type="button" className={styles.resetTipsButton} onClick={handleResetTips}>
+                <FaRedo aria-hidden="true" /> Reexibir dicas iniciais
+              </button>
+            </div>
+            <p className={styles.toursIntro}>
+              Escolha uma tarefa: o sistema abre a tela certa e mostra, passo a passo, onde clicar.
+            </p>
+            <div className={styles.toursGrid}>
+              {TOUR_ORDER.map((id) => TOURS[id]).filter(Boolean).map((tour) => (
+                <button
+                  key={tour.id}
+                  type="button"
+                  className={styles.tourCard}
+                  onClick={() => openTour(tour)}
+                >
+                  <span className={styles.tourCardTitle}>{tour.title}</span>
+                  <span className={styles.tourCardText}>{tour.description}</span>
+                  <span className={styles.tourCardCta}>Ver tour →</span>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <h2 className={styles.tutorialsHeading}>Tutoriais escritos</h2>
           <div className={styles.tutorialsList}>
             {tutorials.map((tutorial) => (
               <div key={tutorial.id} className={styles.tutorialCard}>

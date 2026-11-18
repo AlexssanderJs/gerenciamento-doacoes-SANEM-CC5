@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import apiService from '../../services/api';
 import { mapItemFromBackend, mapItemToBackend } from '../../services/dataMapper';
 import { useApiList } from '../../hooks/useApi';
-import { FaPlus, FaPrint, FaTag, FaEdit, FaTrash } from 'react-icons/fa';
+import { FaPlus, FaPrint, FaTag, FaEdit, FaTrash, FaExclamationTriangle, FaFilter } from 'react-icons/fa';
 import { useNotification } from '../../components/notifications/NotificationProvider';
 import ConfirmationModal from '../../components/confirmation/ConfirmationModal';
 
@@ -15,10 +15,13 @@ const initialProductState = {
   nome: '',
   quantidade: '',
   tagCode: '',
+  estoqueMinimo: '',
   categoriaId: '',
   tamanho: '',
   estadoConservacao: '',
-  genero: ''
+  genero: '',
+  type: '',
+  location: 'Medianeira'
 };
 
 export default function EstoquePage() {
@@ -30,15 +33,20 @@ export default function EstoquePage() {
   const [editProduto, setEditProduto] = useState(initialProductState);
   const [editingItem, setEditingItem] = useState(null);
   const [categories, setCategories] = useState([]);
-  
+  const [lowStockCount, setLowStockCount] = useState(0);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+
   const [filters, setFilters] = useState({
     searchTerm: '',
+    minQuantity: '',
+    maxQuantity: '',
+    lowStock: false,
     categoryId: '',
     size: '',
     conservationState: '',
     gender: '',
-    minQuantity: '',
-    maxQuantity: ''
+    type: '',
+    location: ''
   });
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const router = useRouter();
@@ -67,7 +75,45 @@ export default function EstoquePage() {
     loadCategories();
   }, []);
 
-  // Debounce para busca textual
+  // Link vindo do sino de notificações: /estoque?estoqueBaixo=1
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('estoqueBaixo') === '1') {
+      setFilters(prev => ({ ...prev, lowStock: true }));
+    }
+  }, []);
+
+  // RF19: total de itens no/abaixo do estoque mínimo (independe dos filtros da tabela)
+  async function refreshLowStockCount() {
+    try {
+      const lowItems = await apiService.getLowStockItems();
+      setLowStockCount(Array.isArray(lowItems) ? lowItems.length : 0);
+    } catch {
+      setLowStockCount(0);
+    }
+  }
+
+  function buildActiveFilters() {
+    const activeFilters = {};
+    if (debouncedSearch) activeFilters.searchTerm = debouncedSearch;
+    if (filters.minQuantity) activeFilters.minQuantity = filters.minQuantity;
+    if (filters.maxQuantity) activeFilters.maxQuantity = filters.maxQuantity;
+    if (filters.lowStock) activeFilters.lowStock = true;
+    if (filters.categoryId) activeFilters.categoryId = filters.categoryId;
+    if (filters.size) activeFilters.size = filters.size;
+    if (filters.conservationState) activeFilters.conservationState = filters.conservationState;
+    if (filters.gender) activeFilters.gender = filters.gender;
+    if (filters.type) activeFilters.type = filters.type;
+    if (filters.location) activeFilters.location = filters.location;
+    return activeFilters;
+  }
+
+  async function reloadItems() {
+    await loadDataRaw(buildActiveFilters());
+    refreshLowStockCount();
+  }
+
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(filters.searchTerm);
@@ -78,38 +124,35 @@ export default function EstoquePage() {
 
   // Dispara consulta filtrada ao alterar filtros
   useEffect(() => {
-    const activeFilters = {};
-    if (debouncedSearch) activeFilters.searchTerm = debouncedSearch;
-    if (filters.categoryId) activeFilters.categoryId = filters.categoryId;
-    if (filters.size) activeFilters.size = filters.size;
-    if (filters.conservationState) activeFilters.conservationState = filters.conservationState;
-    if (filters.gender) activeFilters.gender = filters.gender;
-    if (filters.minQuantity) activeFilters.minQuantity = filters.minQuantity;
-    if (filters.maxQuantity) activeFilters.maxQuantity = filters.maxQuantity;
-
-    loadDataRaw(activeFilters).catch(err => {
+    reloadItems().catch(err => {
       console.error("Erro ao carregar itens filtrados:", err);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     debouncedSearch,
+    filters.minQuantity,
+    filters.maxQuantity,
+    filters.lowStock,
     filters.categoryId,
     filters.size,
     filters.conservationState,
     filters.gender,
-    filters.minQuantity,
-    filters.maxQuantity
+    filters.type,
+    filters.location
   ]);
 
   function handleClearFilters() {
     setFilters({
       searchTerm: '',
+      minQuantity: '',
+      maxQuantity: '',
+      lowStock: false,
       categoryId: '',
       size: '',
       conservationState: '',
       gender: '',
-      minQuantity: '',
-      maxQuantity: ''
+      type: '',
+      location: ''
     });
     setDebouncedSearch('');
   }
@@ -121,8 +164,8 @@ export default function EstoquePage() {
       const itemData = mapItemToBackend(novoProduto);
       
       await apiService.createItem(itemData);
-      await loadDataRaw();
-      
+      await reloadItems();
+
       setNovoProduto(initialProductState);
       setShowAddModal(false);
       showNotification("Produto adicionado com sucesso!", "success");
@@ -136,7 +179,7 @@ export default function EstoquePage() {
     
     try {
       await apiService.deleteItem(itemToDelete.id);
-      await loadDataRaw();
+      await reloadItems();
       setItemToDelete(null);
       showNotification("Produto excluído com sucesso!", "success");
     } catch (err) {
@@ -151,12 +194,15 @@ export default function EstoquePage() {
   function handleEditProduto(item) {
     setEditProduto({
       nome: item.nome || '',
-      quantidade: item.quantidade !== undefined ? String(item.quantidade) : '',
+      quantidade: item.quantidade !== undefined && item.quantidade !== null ? String(item.quantidade) : '',
       tagCode: item.tagCode || '',
+      estoqueMinimo: item.estoqueMinimo ?? '',
       categoriaId: item.categoriaId ? String(item.categoriaId) : '',
       tamanho: item.tamanho || '',
       estadoConservacao: item.estadoConservacao || '',
-      genero: item.genero || ''
+      genero: item.genero || '',
+      type: item.type || '',
+      location: item.location || ''
     });
     setEditingItem(item);
     setShowEditModal(true);
@@ -171,8 +217,8 @@ export default function EstoquePage() {
       const itemData = mapItemToBackend(editProduto);
       
       await apiService.updateItem(editingItem.id, itemData);
-      await loadDataRaw();
-      
+      await reloadItems();
+
       setEditProduto(initialProductState);
       setShowEditModal(false);
       setEditingItem(null);
@@ -268,6 +314,7 @@ export default function EstoquePage() {
             <h1 className={styles.titulo}>Controle de Estoque</h1>
             <button
               className={styles.addButton}
+              data-tour="estoque-adicionar"
               onClick={() => {
                 setNovoProduto(initialProductState);
                 setShowAddModal(true);
@@ -280,10 +327,30 @@ export default function EstoquePage() {
 
           <div className={styles.decoracao}></div>
 
-          {/* Barra de Filtros - RF16 */}
-          <div className={styles.filtersContainer}>
+          {lowStockCount > 0 && (
+            <div className={styles.lowStockBanner} role="status">
+              <FaExclamationTriangle aria-hidden="true" />
+              <span>
+                {lowStockCount === 1
+                  ? '1 item está no estoque mínimo ou abaixo dele.'
+                  : `${lowStockCount} itens estão no estoque mínimo ou abaixo dele.`}
+              </span>
+              {!filters.lowStock && (
+                <button
+                  type="button"
+                  className={styles.lowStockBannerButton}
+                  onClick={() => setFilters(prev => ({ ...prev, lowStock: true }))}
+                >
+                  Ver itens
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Barra de Filtros - RF16 + RF19 */}
+          <div className={styles.filtersContainer} data-tour="estoque-filtros">
             <div className={`${styles.formGroup} ${styles.filterGroupText}`}>
-              <input 
+              <input
                 type="text" 
                 placeholder="Filtrar por nome ou código..." 
                 value={filters.searchTerm}
@@ -303,86 +370,106 @@ export default function EstoquePage() {
               </select>
             </div>
 
-            <div className={`${styles.formGroup} ${styles.filterGroupSelect}`}>
-              <select
-                value={filters.size}
-                onChange={(e) => setFilters(prev => ({ ...prev, size: e.target.value }))}
-              >
-                <option value="">Todos os Tamanhos</option>
-                <option value="PP">PP</option>
-                <option value="P">P</option>
-                <option value="M">M</option>
-                <option value="G">G</option>
-                <option value="GG">GG</option>
-                <option value="XG">XG</option>
-                <option value="34">34</option>
-                <option value="36">36</option>
-                <option value="38">38</option>
-                <option value="40">40</option>
-                <option value="42">42</option>
-                <option value="44">44</option>
-                <option value="Único">Único</option>
-              </select>
-            </div>
-
-            <div className={`${styles.formGroup} ${styles.filterGroupSelect}`}>
-              <select
-                value={filters.conservationState}
-                onChange={(e) => setFilters(prev => ({ ...prev, conservationState: e.target.value }))}
-              >
-                <option value="">Todos os Estados</option>
-                <option value="Novo">Novo</option>
-                <option value="Seminovo">Seminovo</option>
-                <option value="Usado - Bom estado">Usado - Bom estado</option>
-                <option value="Usado - Regular">Usado - Regular</option>
-              </select>
-            </div>
-
-            <div className={`${styles.formGroup} ${styles.filterGroupSelect}`}>
-              <select
-                value={filters.gender}
-                onChange={(e) => setFilters(prev => ({ ...prev, gender: e.target.value }))}
-              >
-                <option value="">Todos os Gêneros</option>
-                <option value="Masculino">Masculino</option>
-                <option value="Feminino">Feminino</option>
-                <option value="Infantil">Infantil</option>
-                <option value="Unissex">Unissex</option>
-                <option value="Não aplicável">Não aplicável</option>
-              </select>
-            </div>
-
-            <div className={`${styles.formGroup} ${styles.filterGroupNumber}`}>
-              <input 
-                type="number" 
-                placeholder="Qtd Min." 
-                min="0"
-                value={filters.minQuantity}
-                onChange={(e) => setFilters(prev => ({ ...prev, minQuantity: e.target.value }))}
+            <label className={styles.lowStockFilter} data-tour="estoque-baixo">
+              <input
+                type="checkbox"
+                checked={filters.lowStock}
+                onChange={(e) => setFilters(prev => ({ ...prev, lowStock: e.target.checked }))}
               />
-            </div>
+              Somente estoque baixo
+            </label>
 
-            <div className={`${styles.formGroup} ${styles.filterGroupNumber}`}>
-              <input 
-                type="number" 
-                placeholder="Qtd Máx." 
-                min="0"
-                value={filters.maxQuantity}
-                onChange={(e) => setFilters(prev => ({ ...prev, maxQuantity: e.target.value }))}
-              />
-            </div>
-
-            <button 
-              className={`${styles.cancelButton} ${styles.clearFilterButton}`} 
-              onClick={handleClearFilters}
-              title="Limpar todos os filtros"
+            <button
+              type="button"
+              className={styles.advancedFiltersButton}
+              onClick={() => setShowAdvancedFilters(prev => !prev)}
+              aria-expanded={showAdvancedFilters}
+              aria-controls="advanced-stock-filters"
             >
-              Limpar
+              <FaFilter aria-hidden="true" />
+              <span>Avançado</span>
             </button>
+
+            {showAdvancedFilters && (
+              <div id="advanced-stock-filters" className={styles.advancedFiltersPanel}>
+                <div className={styles.advancedFiltersGrid}>
+                  <select value={filters.size} onChange={(e) => setFilters(prev => ({ ...prev, size: e.target.value }))}>
+                    <option value="">Todos os Tamanhos</option>
+                    <option value="PP">PP</option>
+                    <option value="P">P</option>
+                    <option value="M">M</option>
+                    <option value="G">G</option>
+                    <option value="GG">GG</option>
+                    <option value="XG">XG</option>
+                    <option value="34">34</option>
+                    <option value="36">36</option>
+                    <option value="38">38</option>
+                    <option value="40">40</option>
+                    <option value="42">42</option>
+                    <option value="44">44</option>
+                    <option value="Único">Único</option>
+                  </select>
+                  <select value={filters.conservationState} onChange={(e) => setFilters(prev => ({ ...prev, conservationState: e.target.value }))}>
+                    <option value="">Todos os Estados</option>
+                    <option value="Novo">Novo</option>
+                    <option value="Seminovo">Seminovo</option>
+                    <option value="Usado - Bom estado">Usado - Bom estado</option>
+                    <option value="Usado - Regular">Usado - Regular</option>
+                  </select>
+                  <select value={filters.gender} onChange={(e) => setFilters(prev => ({ ...prev, gender: e.target.value }))}>
+                    <option value="">Todos os Gêneros</option>
+                    <option value="Masculino">Masculino</option>
+                    <option value="Feminino">Feminino</option>
+                    <option value="Infantil">Infantil</option>
+                    <option value="Unissex">Unissex</option>
+                    <option value="Não aplicável">Não aplicável</option>
+                  </select>
+                  <select value={filters.type} onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}>
+                    <option value="">Todos os Tipos</option>
+                    <option value="Camisa">Camisa</option>
+                    <option value="Calça">Calça</option>
+                    <option value="Vestido">Vestido</option>
+                    <option value="Casaco">Casaco</option>
+                    <option value="Calçado">Calçado</option>
+                    <option value="Acessório">Acessório</option>
+                  </select>
+                  <select value={filters.location} onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}>
+                    <option value="">Todas as Localidades</option>
+                    <option value="Medianeira">Medianeira</option>
+                  </select>
+                  <div className={styles.formGroup}>
+                    <input
+                      type="number"
+                      placeholder="Qtd Mín."
+                      min="0"
+                      value={filters.minQuantity}
+                      onChange={(e) => setFilters(prev => ({ ...prev, minQuantity: e.target.value }))}
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <input
+                      type="number"
+                      placeholder="Qtd Máx."
+                      min="0"
+                      value={filters.maxQuantity}
+                      onChange={(e) => setFilters(prev => ({ ...prev, maxQuantity: e.target.value }))}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className={styles.clearFilterButton}
+                    onClick={handleClearFilters}
+                    title="Limpar todos os filtros"
+                  >
+                    Limpar
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Tabela de Produtos com colunas RF16 */}
-          <div className={styles.tableWrapper}>
+          {/* Tabela de Produtos com colunas RF16 + RF19 */}
+          <div className={styles.tableWrapper} data-tour="estoque-tabela">
             <table className={styles.beneficiariosTable}>
               <thead>
                 <tr>
@@ -393,61 +480,80 @@ export default function EstoquePage() {
                   <th>Estado</th>
                   <th>Gênero</th>
                   <th>Quantidade</th>
+                  <th>Estoque mínimo</th>
                   <th>Código/Tag</th>
+                  <th>Detalhes</th>
                   <th>Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={9} className={styles.loadingMessage}>Carregando...</td>
+                    <td colSpan={11} className={styles.loadingMessage}>Carregando...</td>
                   </tr>
                 ) : error ? (
                   <tr>
-                    <td colSpan={9} className={styles.errorMessage}>{error}</td>
+                    <td colSpan={11} className={styles.errorMessage}>{error}</td>
                   </tr>
                 ) : mockEstoque.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className={styles.noDataMessage}>Nenhum produto encontrado com os filtros aplicados.</td>
+                    <td colSpan={11} className={styles.noDataMessage}>
+                      {filters.lowStock ? 'Nenhum item com estoque baixo.' : 'Nenhum produto encontrado com os filtros aplicados.'}
+                    </td>
                   </tr>
                 ) : (
                   mockEstoque.map(item => (
-                    <tr key={item.id}>
-                      <td>{item.id}</td>
-                      <td><strong>{item.nome}</strong></td>
-                      <td>
+                    <tr key={item.id} className={item.estoqueBaixo ? styles.lowStockRow : undefined}>
+                      <td data-label="ID:">{item.id}</td>
+                      <td data-label="Nome:"><strong>{item.nome}</strong></td>
+                      <td data-label="Categoria:">
                         {item.categoria ? (
                           <span className={styles.badgeCategory}>{item.categoria}</span>
                         ) : (
                           <span style={{ color: '#999', fontStyle: 'italic' }}>-</span>
                         )}
                       </td>
-                      <td>{item.tamanho || '-'}</td>
-                      <td>
+                      <td data-label="Tamanho:">{item.tamanho || '-'}</td>
+                      <td data-label="Estado:">
                         {item.estadoConservacao ? (
                           <span className={styles.badgeCondition}>{item.estadoConservacao}</span>
                         ) : (
                           <span style={{ color: '#999', fontStyle: 'italic' }}>-</span>
                         )}
                       </td>
-                      <td>
+                      <td data-label="Gênero:">
                         {item.genero ? (
                           <span className={styles.badgeGender}>{item.genero}</span>
                         ) : (
                           <span style={{ color: '#999', fontStyle: 'italic' }}>-</span>
                         )}
                       </td>
-                      <td>
+                      <td data-label="Quantidade:">
                         <span style={{ fontWeight: '600' }}>{item.quantidade}</span>
+                        {item.estoqueBaixo && (
+                          <span className={styles.lowStockBadge} title="Saldo igual ou abaixo do estoque mínimo">
+                            <FaExclamationTriangle aria-hidden="true" /> Estoque baixo
+                          </span>
+                        )}
                       </td>
-                      <td>
+                      <td data-label="Estoque mínimo:">
+                        {item.estoqueMinimo !== null && item.estoqueMinimo !== undefined ? (
+                          item.estoqueMinimo
+                        ) : (
+                          <span style={{ color: '#999', fontStyle: 'italic' }}>Não definido</span>
+                        )}
+                      </td>
+                      <td data-label="Código/Tag:">
                         {item.tagCode ? (
                           <span style={{ fontWeight: '500' }}>{item.tagCode}</span>
                         ) : (
                           <span style={{ color: '#999', fontStyle: 'italic' }}>Sem tag</span>
                         )}
                       </td>
-                      <td className={styles.actionButtons}>
+                      <td data-label="Detalhes:">
+                        {[item.type, item.location].filter(Boolean).join(' | ') || '-'}
+                      </td>
+                      <td className={styles.actionButtons} data-tour="estoque-acoes">
                         <button
                           className={styles.editButton}
                           onClick={() => handleEditProduto(item)}
@@ -491,7 +597,7 @@ export default function EstoquePage() {
             <form onSubmit={handleAddProduto}>
               <div className={styles.formGroup}>
                 <label htmlFor="nome">Nome / Descrição *</label>
-                <input 
+                <input
                   id="nome"
                   type="text"
                   required 
@@ -579,6 +685,17 @@ export default function EstoquePage() {
 
               <div className={styles.formRow}>
                 <div className={styles.formGroup} style={{ flex: 1 }}>
+                  <label htmlFor="type">Tipo (Opcional)</label>
+                  <input id="type" type="text" value={novoProduto.type} onChange={e => setNovoProduto({ ...novoProduto, type: e.target.value })} placeholder="Ex: Camisa, Calça..." />
+                </div>
+                <div className={styles.formGroup} style={{ flex: 1 }}>
+                  <label htmlFor="location">Localização (Opcional)</label>
+                  <input id="location" type="text" value={novoProduto.location} onChange={e => setNovoProduto({ ...novoProduto, location: e.target.value })} />
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup} style={{ flex: 1 }}>
                   <label htmlFor="tagCode">Código/Tag (Opcional)</label>
                   <input 
                     id="tagCode"
@@ -602,6 +719,21 @@ export default function EstoquePage() {
                 </div>
               </div>
 
+              <div className={styles.formGroup}>
+                <label htmlFor="estoqueMinimo">Estoque mínimo (opcional)</label>
+                <input
+                  id="estoqueMinimo"
+                  type="number"
+                  min={0}
+                  value={novoProduto.estoqueMinimo}
+                  onChange={e => setNovoProduto({ ...novoProduto, estoqueMinimo: e.target.value })}
+                  placeholder="Ex: 5 — avisa quando o saldo chegar a esse valor"
+                  aria-describedby="estoqueMinimoHelp"
+                />
+                <small id="estoqueMinimoHelp" className={styles.fieldHelp}>
+                  Administradores e atendentes serão notificados quando a quantidade atingir ou ficar abaixo deste valor. Deixe em branco para não monitorar.
+                </small>
+              </div>
               <div className={styles.modalActions}>
                 <button 
                   type="button" 
@@ -631,7 +763,7 @@ export default function EstoquePage() {
             <form onSubmit={handleEditSubmit}>
               <div className={styles.formGroup}>
                 <label htmlFor="editNome">Nome / Descrição *</label>
-                <input 
+                <input
                   id="editNome"
                   type="text"
                   required 
@@ -718,6 +850,17 @@ export default function EstoquePage() {
 
               <div className={styles.formRow}>
                 <div className={styles.formGroup} style={{ flex: 1 }}>
+                  <label htmlFor="editType">Tipo (Opcional)</label>
+                  <input id="editType" type="text" value={editProduto.type} onChange={e => setEditProduto({ ...editProduto, type: e.target.value })} placeholder="Ex: Camisa, Calça..." />
+                </div>
+                <div className={styles.formGroup} style={{ flex: 1 }}>
+                  <label htmlFor="editLocation">Localização (Opcional)</label>
+                  <input id="editLocation" type="text" value={editProduto.location} onChange={e => setEditProduto({ ...editProduto, location: e.target.value })} />
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup} style={{ flex: 1 }}>
                   <label htmlFor="editTagCode">Código/Tag (Opcional)</label>
                   <input 
                     id="editTagCode"
@@ -741,6 +884,21 @@ export default function EstoquePage() {
                 </div>
               </div>
 
+              <div className={styles.formGroup}>
+                <label htmlFor="editEstoqueMinimo">Estoque mínimo (opcional)</label>
+                <input
+                  id="editEstoqueMinimo"
+                  type="number"
+                  min={0}
+                  value={editProduto.estoqueMinimo}
+                  onChange={e => setEditProduto({ ...editProduto, estoqueMinimo: e.target.value })}
+                  placeholder="Ex: 5 — avisa quando o saldo chegar a esse valor"
+                  aria-describedby="editEstoqueMinimoHelp"
+                />
+                <small id="editEstoqueMinimoHelp" className={styles.fieldHelp}>
+                  Administradores e atendentes serão notificados quando a quantidade atingir ou ficar abaixo deste valor. Deixe em branco para não monitorar.
+                </small>
+              </div>
               <div className={styles.modalActions}>
                 <button 
                   type="button" 

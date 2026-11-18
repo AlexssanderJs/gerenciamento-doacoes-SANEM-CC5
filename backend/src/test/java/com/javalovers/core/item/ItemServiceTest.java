@@ -11,6 +11,7 @@ import com.javalovers.core.item.mapper.ItemUpdateMapper;
 import com.javalovers.core.item.repository.ItemRepository;
 import com.javalovers.core.item.service.ItemService;
 import com.javalovers.core.item.util.QRCodeService;
+import com.javalovers.core.stockalert.service.StockAlertService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,6 +48,9 @@ class ItemServiceTest {
     @Mock
     private InventoryService inventoryService;
 
+    @Mock
+    private StockAlertService stockAlertService;
+
     @InjectMocks
     private ItemService itemService;
 
@@ -57,11 +61,15 @@ class ItemServiceTest {
                 "Camiseta",
                 1L,
                 100L,
+                false,
                 1L,
                 "Roupas",
                 "M",
                 "Seminovo",
-                "Unissex"
+                "Unissex",
+                null,
+                null,
+                null
         );
 
         Item item = new Item();
@@ -92,10 +100,14 @@ class ItemServiceTest {
                 "Jaqueta de Couro",
                 5L,
                 "TAG-JAQ-01",
+                null,
                 1L,
                 "G",
                 "Usado - Bom estado",
-                "Masculino"
+                "Masculino",
+                "Casaco",
+                "Bom",
+                "Medianeira"
         );
 
         Item itemToSave = new Item();

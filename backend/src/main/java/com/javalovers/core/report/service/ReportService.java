@@ -49,11 +49,12 @@ public class ReportService {
             case APPROVED -> "Aprovado";
             case PENDING -> "Pendente";
             case REJECTED -> "Rejeitado";
+            case INACTIVE -> "Inativo";
         };
     }
 
     private ItemFilterDTO emptyItemFilter() {
-        return new ItemFilterDTO(null, null, null, null, null, null, null, null);
+        return ItemFilterDTO.empty();
     }
 
     // ==========================================
@@ -164,6 +165,16 @@ public class ReportService {
     // 2. ESTOQUE / ITENS (COM ATRIBUTOS RF16 - TIME 5)
     // ==========================================
 
+    private String resolveConservationState(ItemDTO item) {
+        if (item.conservationState() != null && !item.conservationState().isBlank()) {
+            return item.conservationState();
+        }
+        if (item.conditionStatus() != null && !item.conditionStatus().isBlank()) {
+            return item.conditionStatus();
+        }
+        return "-";
+    }
+
     public byte[] generateInventoryCsv(ItemFilterDTO filter) {
         return generateInventoryCsv(filter, null, null);
     }
@@ -183,7 +194,7 @@ public class ReportService {
                 i.tagCode() != null ? i.tagCode() : "",
                 i.category() != null && i.category().name() != null ? i.category().name() : "-",
                 i.size() != null && !i.size().isBlank() ? i.size() : "-",
-                i.conservationState() != null && !i.conservationState().isBlank() ? i.conservationState() : "-",
+                resolveConservationState(i),
                 i.gender() != null && !i.gender().isBlank() ? i.gender() : "-",
                 String.valueOf(i.stockQuantity() != null ? i.stockQuantity() : 0)
         )).toList();
@@ -216,7 +227,7 @@ public class ReportService {
                 i.tagCode() != null ? i.tagCode() : "-",
                 i.category() != null && i.category().name() != null ? i.category().name() : "-",
                 i.size() != null && !i.size().isBlank() ? i.size() : "-",
-                i.conservationState() != null && !i.conservationState().isBlank() ? i.conservationState() : "-",
+                resolveConservationState(i),
                 i.gender() != null && !i.gender().isBlank() ? i.gender() : "-",
                 String.valueOf(i.stockQuantity() != null ? i.stockQuantity() : 0)
         )).toList();

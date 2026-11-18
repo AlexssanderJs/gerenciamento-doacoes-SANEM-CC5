@@ -19,6 +19,7 @@ public class ItemUpdateMapper {
             tag = null;
         }
         item.setTagCode(tag);
+        item.setMinimumStock(itemFormDTO.minimumStock());
 
         if (itemFormDTO.categoryId() != null) {
             item.setCategory(categoryRepository.findById(itemFormDTO.categoryId()).orElse(null));
@@ -29,5 +30,8 @@ public class ItemUpdateMapper {
         item.setSize(itemFormDTO.size());
         item.setConservationState(itemFormDTO.conservationState());
         item.setGender(itemFormDTO.gender());
+        item.setType(itemFormDTO.type());
+        item.setConditionStatus(itemFormDTO.conditionStatus());
+        item.setLocation(itemFormDTO.location());
     }
 }

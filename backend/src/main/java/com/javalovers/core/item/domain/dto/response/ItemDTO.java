@@ -7,9 +7,14 @@ public record ItemDTO(
         String description,
         Long stockQuantity,
         String tagCode,
+        Long minimumStock,
+        boolean lowStock,
         CategoryDTO category,
         String size,
         String conservationState,
-        String gender
+        String gender,
+        String type,
+        String conditionStatus,
+        String location
 ) {
 }

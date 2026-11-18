@@ -18,30 +18,54 @@ export const mapDonorFromBackend = (backendDonor) => {
     }
 }
 
+// "" / null / undefined -> null (sem estoque mínimo configurado)
+const toNullableNumber = (value) => {
+    if (value === "" || value === null || value === undefined) return null
+    const n = Number(value)
+    return Number.isFinite(n) ? n : null
+}
+
 export const mapItemToBackend = (frontendItem) => {
+    const size = frontendItem.tamanho ?? frontendItem.size
+    const conservationState = frontendItem.estadoConservacao ?? frontendItem.conservationState
+    const gender = frontendItem.genero ?? frontendItem.gender
+    const conditionStatus = frontendItem.conditionStatus ?? conservationState
+
     return {
         description: frontendItem.nome || frontendItem.descricao || "",
         stockQuantity: Number(frontendItem.quantidade) || 0,
         tagCode: frontendItem.tagCode?.trim() ? frontendItem.tagCode.trim() : null,
+        minimumStock: toNullableNumber(frontendItem.estoqueMinimo),
         categoryId: frontendItem.categoriaId ? Number(frontendItem.categoriaId) : null,
-        size: frontendItem.tamanho?.trim() ? frontendItem.tamanho.trim() : null,
-        conservationState: frontendItem.estadoConservacao?.trim() ? frontendItem.estadoConservacao.trim() : null,
-        gender: frontendItem.genero?.trim() ? frontendItem.genero.trim() : null
+        size: size?.trim() ? size.trim() : null,
+        conservationState: conservationState?.trim() ? conservationState.trim() : null,
+        gender: gender?.trim() ? gender.trim() : null,
+        type: frontendItem.type?.trim() ? frontendItem.type.trim() : null,
+        conditionStatus: conditionStatus?.trim() ? conditionStatus.trim() : null,
+        location: frontendItem.location?.trim() ? frontendItem.location.trim() : null
     }
 }
 
 export const mapItemFromBackend = (backendItem) => {
+    const resolvedState = backendItem.conservationState || backendItem.conditionStatus || ""
     return {
         id: backendItem.itemId,
         nome: backendItem.description,
         descricao: backendItem.description,
         quantidade: backendItem.stockQuantity,
         tagCode: backendItem.tagCode || null,
+        estoqueMinimo: backendItem.minimumStock ?? null,
+        estoqueBaixo: Boolean(backendItem.lowStock),
         categoriaId: backendItem.category ? backendItem.category.categoryId : (backendItem.categoryId || null),
         categoria: backendItem.category ? backendItem.category.name : (backendItem.categoryName || ""),
         tamanho: backendItem.size || "",
-        estadoConservacao: backendItem.conservationState || "",
-        genero: backendItem.gender || ""
+        estadoConservacao: resolvedState,
+        genero: backendItem.gender || "",
+        size: backendItem.size || "",
+        gender: backendItem.gender || "",
+        type: backendItem.type || "",
+        conditionStatus: backendItem.conditionStatus || resolvedState,
+        location: backendItem.location || ""
     }
 }
 

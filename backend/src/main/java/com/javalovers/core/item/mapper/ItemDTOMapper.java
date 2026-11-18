@@ -22,10 +22,15 @@ public class ItemDTOMapper {
                 item.getDescription(),
                 item.getStockQuantity(),
                 item.getTagCode(),
+                item.getMinimumStock(),
+                item.isLowStock(),
                 categoryDTO,
                 item.getSize(),
                 item.getConservationState(),
-                item.getGender()
+                item.getGender(),
+                item.getType(),
+                item.getConditionStatus(),
+                item.getLocation()
         );
     }
 }

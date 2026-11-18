@@ -21,6 +21,7 @@ public class AuthService {
   public LoginResponseDTO authenticate(LoginRequestDTO loginRequest) {
       String identifier = loginRequest.getLogin() != null ? loginRequest.getLogin().trim() : "";
       AppUser user = appUserRepository.findByLoginAndDeletedAtIsNull(identifier)
+          .or(() -> appUserRepository.findByLoginIgnoreCaseAndDeletedAtIsNull(identifier))
           .or(() -> appUserRepository.findByEmailIgnoreCaseAndDeletedAtIsNull(identifier))
           .orElseThrow(() -> new RuntimeException("Usuário ou senha incorretos"));
 

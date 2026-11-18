@@ -21,6 +21,7 @@ public class ItemCreateMapper {
             tag = null;
         }
         item.setTagCode(tag);
+        item.setMinimumStock(itemFormDTO.minimumStock());
 
         if (itemFormDTO.categoryId() != null) {
             categoryRepository.findById(itemFormDTO.categoryId())
@@ -30,6 +31,9 @@ public class ItemCreateMapper {
         item.setSize(itemFormDTO.size());
         item.setConservationState(itemFormDTO.conservationState());
         item.setGender(itemFormDTO.gender());
+        item.setType(itemFormDTO.type());
+        item.setConditionStatus(itemFormDTO.conditionStatus());
+        item.setLocation(itemFormDTO.location());
 
         return item;
     }

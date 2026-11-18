@@ -47,10 +47,14 @@ class ItemMapperTest {
                 "Camiseta Algodão",
                 10L,
                 "TAG-001",
+                null,
                 1L,
                 "M",
                 "Seminovo",
-                "Unissex"
+                "Unissex",
+                "Camisa",
+                "Bom",
+                "Medianeira"
         );
 
         Item item = itemCreateMapper.convert(formDTO);
@@ -82,10 +86,14 @@ class ItemMapperTest {
                 "Tênis Esportivo",
                 20L,
                 "TAG-002",
+                5L,
                 2L,
                 "40",
                 "Novo",
-                "Masculino"
+                "Masculino",
+                "Calçado",
+                "Novo",
+                "Medianeira"
         );
 
         itemUpdateMapper.update(item, formDTO);

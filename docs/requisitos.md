@@ -12,8 +12,11 @@
 | RF08 | O sistema deve gerar relatórios das doações distribuídas em um determinado período, com filtros por categoria e beneficiário |
 | RF09 | O administrador e o Funcionário devem poder classificar as doações disponibilizando ou excluindo itens caso o mesmo seja inadequado para doação (danificados, impróprios) |
 | RF10 | O administrador deve poder consultar e gerar relatório do histórico de retirada de itens, beneficiários atendidos e distribuição por período |
-| RF11 | O administrador deve poder analisar e aprovar ou reprovar solicitações de cadastro de beneficiários, além de poder bloquear cadastros já aprovados anteriormente (alteração de status) |
+| RF11 | O administrador deve poder analisar e aprovar ou reprovar solicitações de cadastro de beneficiários, além de poder inativar (bloquear) e reativar cadastros já aprovados anteriormente, alterando o status para INACTIVE sem remover o cadastro |
+| RF12 | O sistema deve permitir cadastrar, consultar, editar e inativar (exclusão lógica) pontos de coleta parceiros e sedes de entidades assistenciais em Medianeira, incluindo endereço e horário de funcionamento, e apresentar suas localizações em um mapa interativo |
 | RF16 | O sistema deve permitir consultar e filtrar os itens disponíveis em estoque por categoria, tamanho, estado de conservação e demais características cadastradas |
+| RF19 | O sistema deve notificar os usuários autorizados quando a quantidade disponível de um item atingir ou ficar abaixo do limite mínimo de estoque configurado |
+| RF20 | O sistema deve permitir que a SANEM cadastre, consulte, atualize e inative demandas prioritárias por itens para doação |
 
 ---
 
@@ -28,6 +31,7 @@
 | RNF05 | A interface deve possuir boa acessibilidade |
 | RNF06 | O sistema deve estar disponível durante os horários de funcionamento do brechó |
 | RNF07 | O sistema deve realizar backup automático diário do banco de dados, com possibilidade de restauração em caso de falha |
+| RNF11 | A interface gráfica deve ser de fácil operacionalização para voluntários sem treinamento avançado, com tour guiado das principais operações e dicas iniciais |
 
 ---
 

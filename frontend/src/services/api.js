@@ -2,6 +2,9 @@
 import { API_CONFIG } from "../config/api"
 import authService from "./authService"
 
+// Evento disparado após POST/PUT/PATCH/DELETE bem-sucedidos
+export const DATA_CHANGED_EVENT = "sanem:data-changed"
+
 class ApiService {
     constructor() {
         this.baseURL = API_CONFIG.BASE_URL
@@ -35,6 +38,13 @@ class ApiService {
                 apiError.status = response.status;
                 apiError.response = errorData;
                 throw apiError;
+            }
+
+            // Qualquer escrita bem-sucedida pode ter alterado o estoque (doação,
+            // retirada, ajuste...). Avisa o sino de notificações para recarregar (RF19).
+            const method = (config.method || "GET").toUpperCase()
+            if (method !== "GET" && typeof window !== "undefined") {
+                window.dispatchEvent(new Event(DATA_CHANGED_EVENT))
             }
 
             if (response.status === 204) {
@@ -367,6 +377,86 @@ class ApiService {
         })
     }
 
+    async inactivateBeneficiary(id, approverUserId) {
+        return this.request(
+            `/beneficiary/${id}/inactivate?approverUserId=${approverUserId}`,
+            { method: "PATCH" }
+        )
+    }
+
+    async reactivateBeneficiary(id, approverUserId) {
+        return this.request(
+            `/beneficiary/${id}/reactivate?approverUserId=${approverUserId}`,
+            { method: "PATCH" }
+        )
+    }
+
+    // Métodos para Pontos de Coleta
+    async getCollectionPoints(filters = {}) {
+        const queryParams = new URLSearchParams(filters).toString()
+        const endpoint = `/collection-point/all${queryParams ? `?${queryParams}` : ""}`
+        return this.request(endpoint)
+    }
+
+    async getCollectionPoint(id) {
+        return this.request(`/collection-point/${id}`)
+    }
+
+    async createCollectionPoint(collectionPointData) {
+        return this.request("/collection-point", {
+            method: "POST",
+            body: JSON.stringify(collectionPointData)
+        })
+    }
+
+    async updateCollectionPoint(id, collectionPointData) {
+        return this.request(`/collection-point/${id}`, {
+            method: "PUT",
+            body: JSON.stringify(collectionPointData)
+        })
+    }
+
+    async deleteCollectionPoint(id) {
+        return this.request(`/collection-point/${id}`, {
+            method: "DELETE"
+        })
+    }
+
+    // Métodos para Demandas Prioritárias (RF20)
+    async getPriorityDemands(filters = {}) {
+        const clean = Object.fromEntries(
+            Object.entries(filters).filter(([, v]) => v !== "" && v !== null && v !== undefined)
+        )
+        const queryParams = new URLSearchParams(clean).toString()
+        return this.request(`/priority-demand/all${queryParams ? `?${queryParams}` : ""}`)
+    }
+
+    async getPriorityDemand(id) {
+        return this.request(`/priority-demand/${id}`)
+    }
+
+    async createPriorityDemand(demandData) {
+        return this.request("/priority-demand", {
+            method: "POST",
+            body: JSON.stringify(demandData)
+        })
+    }
+
+    async updatePriorityDemand(id, demandData) {
+        return this.request(`/priority-demand/${id}`, {
+            method: "PUT",
+            body: JSON.stringify(demandData)
+        })
+    }
+
+    async inactivatePriorityDemand(id) {
+        return this.request(`/priority-demand/${id}/inactivate`, { method: "PATCH" })
+    }
+
+    async reactivatePriorityDemand(id) {
+        return this.request(`/priority-demand/${id}/reactivate`, { method: "PATCH" })
+    }
+
     // Métodos para Configuração de Limites de Retirada
     async getWithdrawalLimitConfig() {
         return this.request("/withdrawal-limit-config/active")
@@ -438,7 +528,7 @@ class ApiService {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.message || `Erro ao exportar relatorio (${response.status})`);
+            throw new Error(errorData.details || errorData.message || `Erro ao exportar relatorio (${response.status})`);
         }
 
         const blob = await response.blob();
@@ -453,6 +543,28 @@ class ApiService {
         window.URL.revokeObjectURL(blobUrl);
 
         return { success: true };
+    }
+
+    // Métodos para Notificações (RF19 - estoque mínimo)
+    async getNotifications({ unreadOnly = false, limit = 20 } = {}) {
+        const queryParams = new URLSearchParams({ unreadOnly, limit }).toString()
+        return this.request(`/notification?${queryParams}`)
+    }
+
+    async getUnreadNotificationCount() {
+        return this.request("/notification/unread-count")
+    }
+
+    async markNotificationAsRead(id) {
+        return this.request(`/notification/${id}/read`, { method: "PATCH" })
+    }
+
+    async markAllNotificationsAsRead() {
+        return this.request("/notification/read-all", { method: "PATCH" })
+    }
+
+    async getLowStockItems() {
+        return this.getItems({ lowStock: true })
     }
 }
 

@@ -11,6 +11,7 @@ import com.javalovers.core.item.mapper.ItemDTOMapper;
 import com.javalovers.core.item.mapper.ItemUpdateMapper;
 import com.javalovers.core.item.repository.ItemRepository;
 import com.javalovers.core.item.util.QRCodeService;
+import com.javalovers.core.stockalert.service.StockAlertService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +34,7 @@ public class ItemService {
     private final ItemUpdateMapper itemUpdateMapper;
     private final QRCodeService qrCodeService;
     private final InventoryService inventoryService;
+    private final StockAlertService stockAlertService;
 
     public Item generateItem(ItemFormDTO itemFormDTO) {
         return itemCreateMapper.convert(itemFormDTO);
@@ -40,6 +42,7 @@ public class ItemService {
 
     @Transactional
     public Item createAndSave(ItemFormDTO itemFormDTO) {
+        validateMinimumStock(itemFormDTO);
         Item item = itemCreateMapper.convert(itemFormDTO);
         item = itemRepository.save(item);
 
@@ -47,6 +50,9 @@ public class ItemService {
 
         if (requestedInitialStock > 0) {
             inventoryService.processTransaction(item, requestedInitialStock, TransactionType.MANUAL_ADJUSTMENT_IN, null);
+        } else {
+            // Item criado sem saldo, mas com mínimo configurado, já nasce em alerta
+            stockAlertService.evaluate(item);
         }
 
         return item;
@@ -78,6 +84,7 @@ public class ItemService {
         if (requestedStock < 0) {
             throw new IllegalArgumentException("O estoque do item não pode ser um valor negativo.");
         }
+        validateMinimumStock(itemFormDTO);
 
         itemUpdateMapper.update(item, itemFormDTO); 
 
@@ -92,10 +99,23 @@ public class ItemService {
         }
 
         itemRepository.save(item); 
+
+        // RF19: o mínimo pode ter sido alterado sem mudança de saldo
+        stockAlertService.evaluate(item);
+    }
+
+    private void validateMinimumStock(ItemFormDTO itemFormDTO) {
+        if (itemFormDTO.minimumStock() != null && itemFormDTO.minimumStock() < 0) {
+            throw new IllegalArgumentException("O estoque mínimo não pode ser um valor negativo.");
+        }
     }
 
     @Transactional
     public void delete(Item item) {
+        // Marca como excluído antes de zerar o saldo: assim a verificação de estoque
+        // mínimo (RF19) não notifica sobre um item que está sendo removido e
+        // resolve qualquer alerta que estivesse aberto para ele.
+        item.softDelete();
         Long currentStock = item.getStockQuantity();
 
         if (currentStock != null && currentStock > 0) {
@@ -107,9 +127,10 @@ public class ItemService {
             );
 
             item.setStockQuantity(0L); 
+        } else {
+            stockAlertService.evaluate(item);
         }
 
-        item.softDelete();
         itemRepository.save(item);
     }
 
@@ -155,41 +176,63 @@ public class ItemService {
             if (itemFilterDTO.categoryId() != null) {
                 return criteriaBuilder.equal(root.get("category").get("categoryId"), itemFilterDTO.categoryId());
             }
-            if (itemFilterDTO.category() != null && !itemFilterDTO.category().trim().isEmpty()) {
+            if (hasValue(itemFilterDTO.category())) {
                 String catPattern = "%" + itemFilterDTO.category().trim().toLowerCase() + "%";
                 return criteriaBuilder.like(criteriaBuilder.lower(root.get("category").get("name")), catPattern);
             }
             return criteriaBuilder.conjunction();
         };
 
-        Specification<Item> sizeSpecification = (root, query, criteriaBuilder) -> {
-            if (itemFilterDTO.size() == null || itemFilterDTO.size().trim().isEmpty()) {
+        // RF19: somente itens com mínimo configurado e saldo <= mínimo
+        Specification<Item> lowStockSpecification = (root, query, criteriaBuilder) -> {
+            if (!Boolean.TRUE.equals(itemFilterDTO.lowStock())) {
                 return criteriaBuilder.conjunction();
             }
-            return criteriaBuilder.like(criteriaBuilder.lower(root.get("size")), "%" + itemFilterDTO.size().trim().toLowerCase() + "%");
+            return criteriaBuilder.and(
+                criteriaBuilder.isNotNull(root.get("minimumStock")),
+                criteriaBuilder.lessThanOrEqualTo(root.get("stockQuantity"), root.get("minimumStock"))
+            );
         };
 
-        Specification<Item> conservationStateSpecification = (root, query, criteriaBuilder) -> {
-            if (itemFilterDTO.conservationState() == null || itemFilterDTO.conservationState().trim().isEmpty()) {
-                return criteriaBuilder.conjunction();
+        Specification<Item> attributeSpecification = (root, query, criteriaBuilder) -> {
+            var predicates = criteriaBuilder.conjunction();
+            if (hasValue(itemFilterDTO.size())) {
+                predicates = criteriaBuilder.and(predicates,
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("size")), "%" + itemFilterDTO.size().trim().toLowerCase() + "%"));
             }
-            return criteriaBuilder.like(criteriaBuilder.lower(root.get("conservationState")), "%" + itemFilterDTO.conservationState().trim().toLowerCase() + "%");
-        };
-
-        Specification<Item> genderSpecification = (root, query, criteriaBuilder) -> {
-            if (itemFilterDTO.gender() == null || itemFilterDTO.gender().trim().isEmpty()) {
-                return criteriaBuilder.conjunction();
+            if (hasValue(itemFilterDTO.conservationState())) {
+                predicates = criteriaBuilder.and(predicates,
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("conservationState")), "%" + itemFilterDTO.conservationState().trim().toLowerCase() + "%"));
             }
-            return criteriaBuilder.like(criteriaBuilder.lower(root.get("gender")), "%" + itemFilterDTO.gender().trim().toLowerCase() + "%");
+            if (hasValue(itemFilterDTO.gender())) {
+                predicates = criteriaBuilder.and(predicates,
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("gender")), "%" + itemFilterDTO.gender().trim().toLowerCase() + "%"));
+            }
+            if (hasValue(itemFilterDTO.type())) {
+                predicates = criteriaBuilder.and(predicates,
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("type")), "%" + itemFilterDTO.type().trim().toLowerCase() + "%"));
+            }
+            if (hasValue(itemFilterDTO.conditionStatus())) {
+                predicates = criteriaBuilder.and(predicates,
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("conditionStatus")), "%" + itemFilterDTO.conditionStatus().trim().toLowerCase() + "%"));
+            }
+            if (hasValue(itemFilterDTO.location())) {
+                predicates = criteriaBuilder.and(predicates,
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("location")), "%" + itemFilterDTO.location().trim().toLowerCase() + "%"));
+            }
+            return predicates;
         };
 
         return Specification.where(searchSpecification)
                 .and(quantitySpecification)
+                .and(lowStockSpecification)
                 .and(categorySpecification)
-                .and(sizeSpecification)
-                .and(conservationStateSpecification)
-                .and(genderSpecification)
+                .and(attributeSpecification)
                 .and(notDeletedSpecification);
+    }
+
+    private boolean hasValue(String value) {
+        return value != null && !value.trim().isEmpty();
     }
 
     public Page<ItemDTO> generateItemDTOPage(Page<Item> itemPage) {

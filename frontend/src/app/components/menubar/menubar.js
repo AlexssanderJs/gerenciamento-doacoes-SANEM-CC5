@@ -6,8 +6,10 @@ import authService from '../../../services/authService';
 import { useRouter } from 'next/navigation';
 import { useNotification } from '../../../components/notifications/NotificationProvider';
 import ChangePasswordModal from '../../../components/profile/ChangePasswordModal';
+import NotificationBell from '../../../components/notifications/NotificationBell';
+import { useOnboarding } from '../../../components/onboarding/OnboardingProvider';
 import { translateProfileName } from '../../../utils/validators';
-import { FaUserCircle, FaKey, FaSignOutAlt } from 'react-icons/fa';
+import { FaUserCircle, FaKey, FaSignOutAlt, FaRoute } from 'react-icons/fa';
 
 export default function MenuBar({ hasNotification }) {
   const [userData, setUserData] = useState({
@@ -20,6 +22,7 @@ export default function MenuBar({ hasNotification }) {
   const dropdownRef = useRef(null);
   const router = useRouter();
   const { showNotification } = useNotification();
+  const { startTourForCurrentPage } = useOnboarding();
 
   useEffect(() => {
     const user = authService.getUser();
@@ -141,8 +144,17 @@ export default function MenuBar({ hasNotification }) {
             )}
           </div>
 
-          <div className={styles.iconWrapper} style={{ position: 'relative' }}>
-          </div>
+          <button
+            type="button"
+            className={styles.tourButton}
+            onClick={startTourForCurrentPage}
+            data-tour="tour-button"
+            title="Ver o passo a passo desta tela"
+          >
+            <FaRoute aria-hidden="true" />
+            <span>Tour</span>
+          </button>
+          <NotificationBell />
           <div className={styles.iconWrapper} onClick={handleLogout} title="Sair">
             <LogoutIcon />
           </div>

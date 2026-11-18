@@ -230,3 +230,103 @@
   }
 }
 
+
+/* RNF11 – tours guiados */
+.toursSection {
+  margin: 8px 0 32px;
+}
+
+.toursHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.toursTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 1.3rem;
+  color: var(--color-text, #18132b);
+}
+
+.toursIntro {
+  margin: 8px 0 16px;
+  color: var(--color-text-light, #444);
+}
+
+.resetTipsButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 2px solid var(--color-border, #bfc9d9);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--color-text, #18132b);
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.resetTipsButton:hover,
+.resetTipsButton:focus-visible {
+  border-color: var(--color-primary, #1976d2);
+  color: var(--color-primary, #1976d2);
+  outline: none;
+}
+
+.toursGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.tourCard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  border: 2px solid var(--color-border-light, #e5e7eb);
+  border-radius: 10px;
+  background: #fff;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tourCard:hover,
+.tourCard:focus-visible {
+  border-color: var(--color-primary, #1976d2);
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.12);
+  outline: none;
+}
+
+.tourCardTitle {
+  font-weight: 700;
+  color: var(--color-text, #18132b);
+}
+
+.tourCardText {
+  font-size: 0.9rem;
+  color: var(--color-text-light, #444);
+  line-height: 1.4;
+}
+
+.tourCardCta {
+  margin-top: auto;
+  padding-top: 4px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--color-primary, #1976d2);
+}
+
+.tutorialsHeading {
+  margin: 0 0 12px;
+  font-size: 1.3rem;
+  color: var(--color-text, #18132b);
+}
