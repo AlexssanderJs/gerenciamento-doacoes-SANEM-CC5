@@ -164,6 +164,14 @@ class ApiService {
         return this.request("/user/me")
     }
 
+    async acceptPrivacyConsent() {
+        return this.request("/user/me/consent", { method: "POST" })
+    }
+
+    async revokePrivacyConsent() {
+        return this.request("/user/me/consent", { method: "DELETE" })
+    }
+
     async changeMyPassword(passwordData) {
         return this.request("/user/me/password", {
             method: "PATCH",
