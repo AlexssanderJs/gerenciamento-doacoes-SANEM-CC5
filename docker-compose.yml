@@ -1,59 +1,66 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: javalovers-postgres
-    profiles:
-      - local-db
-    restart: always
+    container_name: sanem-postgres
+    restart: unless-stopped
     environment:
       POSTGRES_DB: sanem
       POSTGRES_USER: sanem
-      POSTGRES_PASSWORD: sanem123
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sanem123}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U sanem -d sanem"]
       interval: 5s
       timeout: 5s
-      retries: 10
+      retries: 15
+      start_period: 10s
     networks:
-      - javalovers-network
+      - sanem-network
 
   mailpit:
     image: axllent/mailpit:latest
-    container_name: javalovers-mailpit
-    restart: always
+    container_name: sanem-mailpit
+    restart: unless-stopped
     ports:
       - "1025:1025"
       - "8025:8025"
     networks:
-      - javalovers-network
+      - sanem-network
 
   backend:
     build: ./backend
-    container_name: javalovers-backend
-    restart: always
+    container_name: sanem-backend
+    restart: unless-stopped
     ports:
       - "8080:8080"
-    # Banco: PostgreSQL (NeonDB via .env, ou PostgreSQL local com --profile local-db).
-    # As variáveis (SPRING_DATASOURCE_URL/USERNAME/PASSWORD e SPRING_PROFILES_ACTIVE)
-    # vêm do .env (não versionado). Ver .env.example.
     env_file:
       - path: .env
         required: false
     environment:
-      MAIL_HOST: ${MAIL_HOST:-mailpit}
-      MAIL_PORT: ${MAIL_PORT:-1025}
+      # Dentro da rede Docker, localhost NÃO é o container do PostgreSQL.
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sanem
+      SPRING_DATASOURCE_USERNAME: sanem
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-sanem123}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      JWT_SECRET: ${JWT_SECRET:?Configure JWT_SECRET no arquivo .env}
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
       APP_FRONTEND_URL: ${APP_FRONTEND_URL:-http://localhost:3000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
     networks:
-      - javalovers-network
+      - sanem-network
 
   frontend:
     build: ./frontend
-    container_name: javalovers-frontend
-    restart: always
+    container_name: sanem-frontend
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
@@ -61,11 +68,11 @@ services:
     depends_on:
       - backend
     networks:
-      - javalovers-network
+      - sanem-network
 
 volumes:
   postgres_data:
 
 networks:
-  javalovers-network:
+  sanem-network:
     driver: bridge
