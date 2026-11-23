@@ -12,6 +12,7 @@ import {
 } from "../../../services/dataMapper"
 import authService from "../../../services/authService"
 import { FaPlus, FaTrash, FaMinus } from "react-icons/fa"
+import NewItemModal from "../../../components/items/NewItemModal"
 
 export default function RegistrarDoacaoPage() {
     const router = useRouter()
@@ -26,7 +27,7 @@ export default function RegistrarDoacaoPage() {
     const [searchDonor, setSearchDonor] = useState("")
     const [searchItem, setSearchItem] = useState("")
 
-    const [newItemName, setNewItemName] = useState("")
+    const [showNewItemModal, setShowNewItemModal] = useState(false)
     // RF20: itemId -> demanda prioritária ativa (para destacar na busca)
     const [demandByItem, setDemandByItem] = useState({})
     const [submitting, setSubmitting] = useState(false)
@@ -105,15 +106,16 @@ export default function RegistrarDoacaoPage() {
         }
     }
 
-    const handleAddNewItem = () => {
-        if (!newItemName.trim()) return
-        const tempId = `new_${Date.now()}`
-
-        setSelectedItems([
-            ...selectedItems,
-            { isNew: true, tempId, nome: newItemName.trim(), quantity: 1 }
+    const handleNewItemCreated = async (createdItem) => {
+        setItems((currentItems) => {
+            const alreadyListed = currentItems.some((item) => item.id === createdItem.id)
+            return alreadyListed ? currentItems : [createdItem, ...currentItems]
+        })
+        setSelectedItems((currentItems) => [
+            ...currentItems,
+            { isNew: false, itemId: createdItem.id, quantity: 1, item: createdItem }
         ])
-        setNewItemName("")
+        await loadItems()
     }
 
     const handleUpdateQuantity = (identifier, isNew, delta) => {
@@ -357,22 +359,12 @@ export default function RegistrarDoacaoPage() {
                                 </div>
 
                                 <div className={styles.newItemInputGroup} data-tour="doacao-novo-item">
-                                    <input
-                                        type="text"
-                                        placeholder="Nome do novo item..."
-                                        value={newItemName}
-                                        onChange={(e) =>
-                                            setNewItemName(e.target.value)
-                                        }
-                                        className={styles.searchInput}
-                                    />
                                     <button
                                         type="button"
-                                        onClick={handleAddNewItem}
-                                        disabled={!newItemName.trim()}
+                                        onClick={() => setShowNewItemModal(true)}
                                         className={styles.addSecondaryButton}
                                     >
-                                        Criar Novo Item
+                                        Cadastrar novo item
                                     </button>
                                 </div>
                             </div>
@@ -504,6 +496,12 @@ export default function RegistrarDoacaoPage() {
                     </form>
                 </div>
             </div>
+            {showNewItemModal && (
+                <NewItemModal
+                    onClose={() => setShowNewItemModal(false)}
+                    onCreated={handleNewItemCreated}
+                />
+            )}
         </div>
     )
 }

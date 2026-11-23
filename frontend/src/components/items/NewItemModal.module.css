@@ -1,0 +1,108 @@
+.overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.58);
+}
+
+.modal {
+    width: min(620px, 94vw);
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 32px;
+    border: 1px solid #e0e0e0;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.24);
+}
+
+.modal h2 {
+    margin: 0 0 24px;
+    color: #1976d2;
+    font-size: 1.5rem;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-bottom: 16px;
+}
+
+.formGroup label {
+    font-weight: 600;
+    color: #333;
+}
+
+.formGroup input,
+.formGroup select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 11px 12px;
+    border: 1.5px solid #d9d9d9;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.attributesGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 12px;
+}
+
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 8px;
+    padding-top: 20px;
+    border-top: 1px solid #eaeaea;
+}
+
+.cancelButton,
+.submitButton {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.cancelButton {
+    border: 1.5px solid #d9d9d9;
+    background: #fff;
+    color: #555;
+}
+
+.submitButton {
+    border: none;
+    background: #1976d2;
+    color: #fff;
+}
+
+.submitButton:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+    .modal {
+        padding: 20px;
+    }
+
+    .attributesGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .actions {
+        flex-direction: column-reverse;
+    }
+
+    .cancelButton,
+    .submitButton {
+        width: 100%;
+    }
+}
