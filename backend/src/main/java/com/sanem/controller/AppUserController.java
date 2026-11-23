@@ -7,6 +7,7 @@ import com.sanem.model.dto.ChangePasswordRequestDTO;
 import com.sanem.model.dto.AppUserDTO;
 import com.sanem.model.entity.AppUser;
 import com.sanem.service.AppUserService;
+import com.sanem.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,6 +26,7 @@ import java.util.Map;
 public class AppUserController {
 
     private final AppUserService userService;
+    private final AuthService authService;
 
     @GetMapping("/me")
     public ResponseEntity<AppUserDTO> getCurrentUserProfile() {
@@ -37,6 +39,18 @@ public class AppUserController {
     ) {
         userService.changeCurrentUserPassword(request);
         return ResponseEntity.ok(Map.of("message", "Senha alterada com sucesso."));
+    }
+
+    @PostMapping("/me/consent")
+    public ResponseEntity<Map<String, Object>> acceptPrivacyConsent() {
+        authService.acceptPrivacyConsent();
+        return ResponseEntity.ok(Map.of("accepted", true, "version", "SANEM-PRIVACY-1.0"));
+    }
+
+    @DeleteMapping("/me/consent")
+    public ResponseEntity<Map<String, Boolean>> revokePrivacyConsent() {
+        authService.revokePrivacyConsent();
+        return ResponseEntity.ok(Map.of("accepted", false));
     }
 
     @GetMapping
