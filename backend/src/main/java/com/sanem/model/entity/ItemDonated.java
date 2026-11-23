@@ -1,8 +1,5 @@
 package com.sanem.model.entity;
 
-import com.sanem.model.entity.SoftDeletable;
-import com.sanem.model.entity.Donation;
-import com.sanem.model.entity.Item;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -18,7 +15,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ItemDonated implements SoftDeletable {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "item_donated_id")
@@ -35,7 +31,14 @@ public class ItemDonated implements SoftDeletable {
     @Column(nullable = false)
     private Integer quantity;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "conservation_state", length = 16, nullable = false)
+    private ConservationState conservationState = ConservationState.GOOD;
+
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
-
 }
