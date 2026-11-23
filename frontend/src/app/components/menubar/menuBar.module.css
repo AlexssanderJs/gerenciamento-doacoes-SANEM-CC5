@@ -28,6 +28,12 @@
   gap: 8px;
   font-size: 1rem;
   color: #444;
+  background: transparent;
+  border: none;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
 }
 
 .userName {
@@ -39,6 +45,8 @@
   font-size: 0.8rem;
   color: #b0b4be;
   margin-left: 2px;
+  display: inline-block;
+  transition: transform 0.2s ease;
 }
 
 .iconWrapper {
@@ -92,4 +100,71 @@
   background: var(--color-primary, #1976d2);
   color: #fff;
   outline: none;
+}
+
+/* Container do menu do usuário */
+.userMenuContainer {
+  position: relative;
+}
+
+/* Efeito ao passar o mouse sobre o usuário */
+.userInfo:hover {
+  background: #f2f4f8;
+}
+
+.userInfo:focus-visible {
+  outline: 2px solid #1976d2;
+  outline-offset: 2px;
+}
+
+/* Rotação da seta quando o menu abre */
+.arrowUp {
+  transform: rotate(180deg);
+}
+
+/* Caixa do menu suspenso */
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 220px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  padding: 8px;
+  z-index: 200;
+}
+
+/* Botões Visualizar perfil e Sair */
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: #333;
+  cursor: pointer;
+  text-align: left;
+}
+
+.dropdownItem:hover {
+  background: #f2f4f8;
+}
+
+.dropdownItem:focus-visible {
+  outline: 2px solid #1976d2;
+  outline-offset: -2px;
+}
+
+/* Linha separadora entre as opções */
+.dropdownDivider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 6px 4px;
 }
