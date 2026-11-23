@@ -1,5 +1,6 @@
 package com.sanem.model.entity;
 
+import com.sanem.model.enums.ConservationState;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
