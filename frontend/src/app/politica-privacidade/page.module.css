@@ -1,0 +1,139 @@
+.page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 18px;
+    background: #f4f6f9;
+}
+
+.card {
+    width: min(860px, 100%);
+    padding: 36px;
+    background: #fff;
+    border: 1px solid #e4e8ef;
+    border-radius: 16px;
+    box-shadow: 0 12px 36px rgba(25, 45, 75, 0.08);
+}
+
+.eyebrow {
+    margin: 0 0 8px;
+    color: #1976d2;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+}
+
+.card h1 {
+    margin: 0;
+    color: #182230;
+    font-size: clamp(1.8rem, 4vw, 2.4rem);
+}
+
+.intro {
+    color: #526071;
+    line-height: 1.65;
+}
+
+.policy {
+    max-height: 48vh;
+    overflow-y: auto;
+    margin: 24px 0;
+    padding: 22px;
+    background: #f8fafc;
+    border: 1px solid #e8edf3;
+    border-radius: 10px;
+}
+
+.policy h2 {
+    margin: 18px 0 6px;
+    color: #26364a;
+    font-size: 1rem;
+}
+
+.policy h2:first-child {
+    margin-top: 0;
+}
+
+.policy p {
+    margin: 0;
+    color: #536172;
+    line-height: 1.65;
+}
+
+.policy .version {
+    margin-top: 20px;
+    color: #758295;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.accept {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    color: #29384a;
+    line-height: 1.5;
+}
+
+.accept input {
+    margin-top: 4px;
+    width: 17px;
+    height: 17px;
+}
+
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.actions button {
+    min-height: 42px;
+    padding: 10px 18px;
+    border: 0;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.actions button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.primary {
+    color: #fff;
+    background: #1976d2;
+}
+
+.secondary {
+    color: #344256;
+    background: #e9eef5;
+}
+
+.danger {
+    color: #fff;
+    background: #b42318;
+}
+
+.error {
+    margin-top: 12px;
+    color: #b42318;
+}
+
+@media (max-width: 600px) {
+    .card {
+        padding: 24px 18px;
+    }
+
+    .actions {
+        flex-direction: column-reverse;
+    }
+
+    .actions button {
+        width: 100%;
+    }
+}

@@ -335,3 +335,10 @@ mvn clean package
 cd frontend
 npm run build
 ```
+
+
+## Consentimento e chave JWT
+
+O backend exige um segredo JWT configurado na variável de ambiente `JWT_SECRET`, com pelo menos 32 bytes. Gere um valor aleatório forte e configure-o no ambiente do backend; não reutilize o valor de exemplo nem versione o arquivo `.env`.
+
+Após aplicar as migrations V14 e V15, usuários que ainda não registraram o aceite da política de privacidade serão direcionados à tela de consentimento. O aceite fica associado à versão `SANEM-PRIVACY-1.0` e é necessário para acessar as demais rotas protegidas da API.

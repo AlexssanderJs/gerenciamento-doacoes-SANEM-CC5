@@ -13,6 +13,7 @@ import com.sanem.specification.DonationSpecification;
 import com.sanem.model.entity.Donor;
 import com.sanem.model.entity.AppUser;
 import com.sanem.model.entity.Item;
+import com.sanem.model.entity.Category;
 import com.sanem.service.ItemService;
 import com.sanem.model.entity.ItemDonated;
 import com.sanem.repository.ItemDonatedRepository;
@@ -33,7 +34,8 @@ public class DonationService {
     private final DonationCreateMapper donationCreateMapper;
     private final DonationDTOMapper donationDTOMapper;
 
-    private final ItemService itemService; 
+    private final ItemService itemService;
+    private final CategoryService categoryService; 
     private final ItemDonatedRepository itemDonatedRepository;
 
     private final InventoryService inventoryService;
@@ -64,10 +66,17 @@ public class DonationService {
                 donationSalva.getDonationId()
             );
 
+            Category category = categoryService.getOrNull(itemDTO.categoryId());
+            if (category == null || category.getDeletedAt() != null) {
+                throw new EntityNotFoundException("Category", itemDTO.categoryId());
+            }
+
             ItemDonated itemDonated = new ItemDonated();
             itemDonated.setDonation(donationSalva);
             itemDonated.setItem(item);
             itemDonated.setQuantity(itemDTO.quantity());
+            itemDonated.setCategory(category);
+            itemDonated.setConservationState(itemDTO.conservationState());
             itemDonatedRepository.save(itemDonated);
         }
 

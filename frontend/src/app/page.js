@@ -28,10 +28,12 @@ export default function Login() {
     }
 
     try {
-      await execute(() => authService.login(trimmedUser, password));
+      const loginResult = await execute(() => authService.login(trimmedUser, password));
       showNotification("Login realizado com sucesso!", "success");
       setTimeout(() => {
-        window.location.href = "/home";
+        window.location.href = loginResult?.user?.privacyConsent
+          ? "/home"
+          : "/politica-privacidade";
       }, 500);
     } catch (err) {
       const message = err.message || "Usuário ou senha incorretos.";

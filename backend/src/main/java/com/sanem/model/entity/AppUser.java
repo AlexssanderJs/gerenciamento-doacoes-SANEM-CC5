@@ -49,6 +49,18 @@ public class AppUser implements SoftDeletable {
     @JoinColumn(name = "profile_id", nullable = false)
     private Profile profile;
 
+    @Column(name = "privacy_consent", nullable = false)
+    private boolean privacyConsent = false;
+
+    @Column(name = "privacy_consent_at")
+    private LocalDateTime privacyConsentAt;
+
+    @Column(name = "privacy_consent_revoked_at")
+    private LocalDateTime privacyConsentRevokedAt;
+
+    @Column(name = "privacy_consent_version", length = 50)
+    private String privacyConsentVersion;
+
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 }

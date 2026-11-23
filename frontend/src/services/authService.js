@@ -89,6 +89,8 @@ class AuthService {
       email: data.email,
       role: data.role,
       perfilId: null,
+      privacyConsent: Boolean(data.privacyConsent),
+      privacyConsentVersion: data.privacyConsentVersion || null,
     };
 
     this.setAuthData(data.token, user);
@@ -118,6 +120,18 @@ class AuthService {
       { token, newPassword, confirmPassword },
       'Não foi possível redefinir a senha'
     );
+  }
+
+  updatePrivacyConsent(accepted, version = 'SANEM-PRIVACY-1.0') {
+    const token = this.getToken();
+    const user = this.getUser();
+    if (!token || !user) return;
+
+    this.setAuthData(token, {
+      ...user,
+      privacyConsent: Boolean(accepted),
+      privacyConsentVersion: accepted ? version : user.privacyConsentVersion,
+    });
   }
 
   logout() {

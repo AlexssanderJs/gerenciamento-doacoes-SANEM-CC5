@@ -10,11 +10,11 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LoginResponseDTO {
-
-  private String token;
-  private String name;
-  private String email;
-  private String role;
-  private Long userId;
+    private String token;
+    private String name;
+    private String email;
+    private String role;
+    private Long userId;
+    private boolean privacyConsent;
+    private String privacyConsentVersion;
 }
-

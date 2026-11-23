@@ -20,6 +20,7 @@ export default function RegistrarDoacaoPage() {
 
     const [donors, setDonors] = useState([])
     const [items, setItems] = useState([])
+    const [categories, setCategories] = useState([])
 
     const [selectedDonor, setSelectedDonor] = useState(null)
     const [selectedItems, setSelectedItems] = useState([])
@@ -35,8 +36,25 @@ export default function RegistrarDoacaoPage() {
     useEffect(() => {
         loadDonors()
         loadItems()
+        loadCategories()
         loadPriorityDemands()
     }, [])
+
+    const loadCategories = async () => {
+        try {
+            const data = await apiService.getCategories()
+            setCategories((data || []).filter((category) => !category.deletedAt))
+        } catch (err) {
+            console.error("Erro ao carregar categorias:", err)
+            showNotification("Erro ao carregar categorias", "error")
+        }
+    }
+
+    const getDefaultCategoryId = (item) => {
+        const fallback = categories.find((category) => category.name?.toLowerCase() === "outros")
+            || categories[0]
+        return item?.categoriaId || fallback?.categoryId || ""
+    }
 
     const loadPriorityDemands = async () => {
         try {
@@ -101,7 +119,14 @@ export default function RegistrarDoacaoPage() {
         } else {
             setSelectedItems([
                 ...selectedItems,
-                { isNew: false, itemId: item.id, quantity: 1, item }
+                {
+                    isNew: false,
+                    itemId: item.id,
+                    quantity: 1,
+                    item,
+                    categoryId: String(getDefaultCategoryId(item)),
+                    conservationState: "GOOD"
+                }
             ])
         }
     }
@@ -113,7 +138,14 @@ export default function RegistrarDoacaoPage() {
         })
         setSelectedItems((currentItems) => [
             ...currentItems,
-            { isNew: false, itemId: createdItem.id, quantity: 1, item: createdItem }
+            {
+                isNew: false,
+                itemId: createdItem.id,
+                quantity: 1,
+                item: createdItem,
+                categoryId: String(getDefaultCategoryId(createdItem)),
+                conservationState: "GOOD"
+            }
         ])
         await loadItems()
     }
@@ -164,19 +196,24 @@ export default function RegistrarDoacaoPage() {
             return
         }
 
+        if (selectedItems.some((si) => !si.categoryId)) {
+            showNotification("Selecione a categoria de todos os itens", "error")
+            return
+        }
+
         try {
             setSubmitting(true)
 
             const donationData = {
                 donationDate: new Date().toISOString(),
                 donorId: selectedDonor.id,
-                receiverUserId: user.id,
-                items: selectedItems.map((si) => {
-                    if (si.isNew) {
-                        return { description: si.nome, quantity: si.quantity }
-                    }
-                    return { itemId: si.itemId, quantity: si.quantity }
-                })
+                items: selectedItems.map((si) => ({
+                    itemId: si.itemId || null,
+                    newItemName: si.isNew ? si.nome : null,
+                    quantity: si.quantity,
+                    categoryId: Number(si.categoryId),
+                    conservationState: si.conservationState || "GOOD"
+                }))
             }
 
             await apiService.createDonation(donationData)
@@ -396,6 +433,41 @@ export default function RegistrarDoacaoPage() {
                                                         Novo Item
                                                     </span>
                                                 )}
+                                            </div>
+
+                                            <div className={styles.itemMetadataControls}>
+                                                <label>
+                                                    Categoria
+                                                    <select
+                                                        value={si.categoryId || ""}
+                                                        onChange={(e) => setSelectedItems((current) => current.map((entry) =>
+                                                            entry === si ? { ...entry, categoryId: e.target.value } : entry
+                                                        ))}
+                                                        required
+                                                    >
+                                                        <option value="">Selecione</option>
+                                                        {categories.map((category) => (
+                                                            <option key={category.categoryId} value={category.categoryId}>
+                                                                {category.name}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </label>
+                                                <label>
+                                                    Conservação
+                                                    <select
+                                                        value={si.conservationState || "GOOD"}
+                                                        onChange={(e) => setSelectedItems((current) => current.map((entry) =>
+                                                            entry === si ? { ...entry, conservationState: e.target.value } : entry
+                                                        ))}
+                                                        required
+                                                    >
+                                                        <option value="NEW">Novo</option>
+                                                        <option value="GOOD">Bom</option>
+                                                        <option value="FAIR">Regular</option>
+                                                        <option value="POOR">Ruim</option>
+                                                    </select>
+                                                </label>
                                             </div>
 
                                             <div
