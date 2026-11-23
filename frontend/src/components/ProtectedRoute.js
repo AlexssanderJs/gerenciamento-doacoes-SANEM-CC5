@@ -17,7 +17,7 @@ export default function ProtectedRoute({ children }) {
 
         if (!authenticated) {
           router.replace("/");
-        } else if (user?.privacyConsent === false && window.location.pathname !== "/politica-privacidade") {
+        } else if (user?.privacyConsent !== true && window.location.pathname !== "/politica-privacidade") {
           router.replace("/politica-privacidade");
         }
       } catch (error) {

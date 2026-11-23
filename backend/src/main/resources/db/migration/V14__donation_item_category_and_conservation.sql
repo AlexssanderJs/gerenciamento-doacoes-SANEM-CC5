@@ -2,8 +2,8 @@
 -- PostgreSQL: migração compatível com o schema atual do SANEM.
 
 INSERT INTO category (name)
-SELECT 'Outros'
-WHERE NOT EXISTS (SELECT 1 FROM category WHERE name = 'Outros');
+VALUES ('Outros')
+ON CONFLICT (name) DO UPDATE SET deleted_at = NULL;
 
 ALTER TABLE item_donated
     ADD COLUMN category_id INTEGER,
