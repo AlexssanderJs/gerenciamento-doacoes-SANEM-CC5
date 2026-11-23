@@ -63,14 +63,12 @@ O sistema tem como objetivo o gerenciamento de um brechó beneficente que distri
 
 ### Frontend
 
-- **React 18**
-- **React Router DOM** - Roteamento
-- **Styled Components** - Estilização
-- **React Hook Form** - Gerenciamento de formulários
-- **React Query** - Gerenciamento de estado do servidor
+- **Next.js 15** (App Router) + **React 19**
+- **CSS Modules** - Estilização
 - **Axios** - Cliente HTTP
 - **React Icons** - Ícones
 - **Leaflet / React-Leaflet** - Mapa interativo dos pontos de coleta (OpenStreetMap)
+- **driver.js** - Tour guiado / onboarding (RF11)
 
 ### DevOps
 
@@ -79,22 +77,33 @@ O sistema tem como objetivo o gerenciamento de um brechó beneficente que distri
 
 ## 📁 Estrutura do Projeto
 
+O backend segue **organização por camadas** (_package-by-layer_): cada camada técnica
+fica em seu próprio pacote sob `com.sanem`.
+
 ```
-JavaLovers/
+gerenciamento-doacoes-SANEM/
 ├── backend/                    # Backend Java Spring Boot
 │   ├── src/
 │   │   ├── main/
-│   │   │   ├── java/com/javalovers/
-│   │   │   │   ├── JavaLoversApplication.java
-│   │   │   │   ├── common/                 # Config, segurança, utilidades, soft delete
-│   │   │   │   └── core/                   # Módulos de domínio
-│   │   │   │       ├── beneficiary/        # Beneficiários (CRUD + status INACTIVE)
-│   │   │   │       ├── collectionpoint/    # Pontos de coleta e sedes (NOVO)
-│   │   │   │       ├── donor/
-│   │   │   │       └── ...
+│   │   │   ├── java/com/sanem/
+│   │   │   │   ├── SanemApplication.java
+│   │   │   │   ├── config/                 # SecurityConfig, WebConfig
+│   │   │   │   ├── controller/             # Endpoints REST
+│   │   │   │   ├── service/                # Regras de negócio
+│   │   │   │   ├── repository/             # Spring Data JPA (+ SoftDeleteRepository)
+│   │   │   │   ├── mapper/                 # Conversão entity <-> DTO
+│   │   │   │   ├── model/
+│   │   │   │   │   ├── entity/             # Entidades JPA
+│   │   │   │   │   ├── dto/                # Requests e responses
+│   │   │   │   │   └── enums/              # Enumerações
+│   │   │   │   ├── exception/              # GlobalExceptionHandler e erros
+│   │   │   │   ├── security/               # JwtFilter, JwtService
+│   │   │   │   ├── specification/          # Filtros dinâmicos (JPA Specifications)
+│   │   │   │   ├── util/                   # Utilitários (HTTP, QR Code, relatórios)
+│   │   │   │   └── validation/             # Validações customizadas (CPF/CNPJ, senha)
 │   │   │   └── resources/
 │   │   │       ├── application.yml
-│   │   │       └── db/migration/           # Migrations Flyway (V2..V10)
+│   │   │       └── db/migration/           # Migrations Flyway
 │   │   └── test/
 │   ├── pom.xml
 │   └── Dockerfile
@@ -114,7 +123,7 @@ JavaLovers/
 │   │   └── hooks/
 │   ├── package.json
 │   └── Dockerfile
-├── Banco de Dados/            # Scripts do banco de dados
+├── db/                        # Scripts e diagrama do banco de dados
 │   ├── Diagrama MER.pdf
 │   ├── script-create-tables.sql
 │   └── script-insert-values.sql
@@ -183,7 +192,7 @@ JavaLovers/
     export SPRING_DATASOURCE_PASSWORD="<senha>"
 
     mvn clean package
-    java -jar target/javalovers-backend-1.0.0.jar
+    java -jar target/sanem-backend-1.0.0.jar
     ```
 
 #### Frontend
@@ -242,58 +251,58 @@ necessária, então produção funciona sem seed.)
 
 ### Implementadas
 
-- ✅ Estrutura base do backend Spring Boot
-- ✅ Configuração de segurança com Spring Security
-- ✅ Interface React moderna e responsiva
-- ✅ Páginas de Login e Cadastro
-- ✅ Dashboard do usuário
-- ✅ Configuração de CORS
-- ✅ Containerização com Docker
-
-### Em Desenvolvimento
-
 #### 👥 Gestão de Beneficiários
 
-- 🔄 CRUD completo de beneficiários
-- 🔄 Sistema de aprovação de cadastros
-- 🔄 Inativação/reativação de beneficiários aprovados (status `INACTIVE`)
-- 🔄 Geração de cartões de identificação
-- 🔄 Histórico de atendimentos
+- ✅ CRUD completo de beneficiários
+- ✅ Sistema de aprovação de cadastros (aprovar/rejeitar)
+- ✅ Inativação/reativação de beneficiários aprovados (status `INACTIVE`)
+- ✅ Geração de cartões de identificação (PDF)
 
 #### 📍 Pontos de Coleta e Sedes
 
-- 🔄 CRUD de pontos de coleta parceiros e sedes de entidades assistenciais
-- 🔄 Endereço e horário de funcionamento por local
-- 🔄 Mapa interativo (Leaflet + OpenStreetMap) com as localizações
+- ✅ CRUD de pontos de coleta parceiros e sedes de entidades assistenciais
+- ✅ Endereço e horário de funcionamento por local
+- ✅ Mapa interativo (Leaflet + OpenStreetMap) com as localizações
 
 #### 📦 Controle de Estoque
 
-- 🔄 Cadastro de itens doados
-- 🔄 Sistema de códigos únicos
-- 🔄 Controle de entrada e saída
-- 🔄 Alertas de estoque baixo
+- ✅ Cadastro e triagem de itens doados
+- ✅ Categorias e estado de conservação (RF16)
+- ✅ Controle de entrada e saída (ledger de transações de inventário)
+- ✅ Estoque mínimo com notificações de estoque baixo (RF19)
 
-#### 🎁 Sistema de Distribuição
+#### 🎁 Distribuição
 
-- 🔄 Registro de retiradas
-- 🔄 Controle de limites mensais
-- 🔄 Baixa automática no estoque
-- 🔄 Validação de regras de distribuição
+- ✅ Registro de retiradas com baixa automática no estoque
+- ✅ Controle de limites mensais (configuração + reset)
+- ✅ Validação das regras de distribuição
 
-#### 👨‍💼 Administração
+#### 📣 Demandas Prioritárias (RF20)
 
-- 🔄 Sistema de permissões (Atendente/Administrador)
-- 🔄 Gestão de usuários
-- 🔄 Relatórios de doações
-- 🔄 Relatórios de distribuições
-- 🔄 Dashboard administrativo
+- ✅ Cadastrar, consultar, atualizar e inativar demandas por itens do estoque
 
-#### 🔧 Infraestrutura
+#### 👨‍💼 Administração e Relatórios
 
-- 🔄 Sistema de autenticação JWT
-- 🔄 Integração frontend-backend
-- 🔄 Validação de formulários
-- 🔄 Testes unitários e de integração
+- ✅ Sistema de permissões (Atendente/Administrador)
+- ✅ Gestão de usuários e perfis
+- ✅ Relatórios de doações, distribuições e posição de estoque (CSV/PDF)
+
+#### 🔐 Autenticação e Segurança
+
+- ✅ Autenticação JWT
+- ✅ Recuperação e alteração de senha (com política de senha forte)
+- ✅ Validação de CPF/CNPJ e de formulários
+
+#### 🧭 Experiência do Usuário
+
+- ✅ Interface React (Next.js App Router) responsiva
+- ✅ Tour guiado nas telas (onboarding, RF11)
+- ✅ Containerização com Docker e CORS configurado
+
+### Em evolução
+
+- 🔄 Ampliação da cobertura de testes automatizados
+- 🔄 Dashboard administrativo com indicadores
 
 ## 🧪 Testes
 
