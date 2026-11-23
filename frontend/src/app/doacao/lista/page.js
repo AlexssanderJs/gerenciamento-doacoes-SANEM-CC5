@@ -13,6 +13,7 @@ import {
     mapDonationFromBackend
 } from "../../../services/dataMapper"
 import authService from "../../../services/authService"
+import NewItemModal from "../../../components/items/NewItemModal"
 
 export default function ListaDoacoesPage() {
     const { showNotification } = useNotification()
@@ -34,7 +35,7 @@ export default function ListaDoacoesPage() {
     const [selectedItems, setSelectedItems] = useState([])
     const [searchDonor, setSearchDonor] = useState("")
     const [searchItem, setSearchItem] = useState("")
-    const [newItemName, setNewItemName] = useState("")
+    const [showNewItemModal, setShowNewItemModal] = useState(false)
     const [submitting, setSubmitting] = useState(false)
 
     // ==========================================
@@ -227,7 +228,6 @@ export default function ListaDoacoesPage() {
         setSelectedItems([])
         setSearchDonor("")
         setSearchItem("")
-        setNewItemName("")
         setShowAddModal(true)
     }
 
@@ -261,14 +261,16 @@ export default function ListaDoacoesPage() {
         }
     }
 
-    const handleAddNewItem = () => {
-        if (!newItemName.trim()) return
-        const tempId = `new_${Date.now()}`
-        setSelectedItems([
-            ...selectedItems,
-            { isNew: true, tempId, nome: newItemName.trim(), quantity: 1 }
+    const handleNewItemCreated = async (createdItem) => {
+        setItems((currentItems) => {
+            const alreadyListed = currentItems.some((item) => item.id === createdItem.id)
+            return alreadyListed ? currentItems : [createdItem, ...currentItems]
+        })
+        setSelectedItems((currentItems) => [
+            ...currentItems,
+            { isNew: false, itemId: createdItem.id, quantity: 1, item: createdItem }
         ])
-        setNewItemName("")
+        await loadItems()
     }
 
     const handleUpdateQuantity = (identifier, isNew, delta) => {
@@ -732,31 +734,13 @@ export default function ListaDoacoesPage() {
                                     </div>
 
                                     <div className={styles.createNewItem}>
-                                        <div
-                                            className={styles.newItemInputGroup}
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowNewItemModal(true)}
+                                            className={styles.addSecondaryButton}
                                         >
-                                            <input
-                                                type="text"
-                                                placeholder="Nome do novo item..."
-                                                value={newItemName}
-                                                onChange={(e) =>
-                                                    setNewItemName(
-                                                        e.target.value
-                                                    )
-                                                }
-                                                className={styles.searchInput}
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={handleAddNewItem}
-                                                disabled={!newItemName.trim()}
-                                                className={
-                                                    styles.addSecondaryButton
-                                                }
-                                            >
-                                                Criar Novo
-                                            </button>
-                                        </div>
+                                            Cadastrar novo item
+                                        </button>
                                     </div>
                                 </div>
 
@@ -907,6 +891,13 @@ export default function ListaDoacoesPage() {
                         </form>
                     </div>
                 </div>
+            )}
+
+            {showNewItemModal && (
+                <NewItemModal
+                    onClose={() => setShowNewItemModal(false)}
+                    onCreated={handleNewItemCreated}
+                />
             )}
 
             <ConfirmationModal
