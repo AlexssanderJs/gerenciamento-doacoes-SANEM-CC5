@@ -12,4 +12,4 @@ RUN mvn clean package -DskipTests
 
 EXPOSE 8080
 
-CMD ["java", "-jar", "target/javalovers-backend-1.0.0.jar"]
+CMD ["java", "-jar", "target/sanem-backend-1.0.0.jar"]
