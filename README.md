@@ -341,4 +341,24 @@ npm run build
 
 O backend exige um segredo JWT configurado na variável de ambiente `JWT_SECRET`, com pelo menos 32 bytes. Gere um valor aleatório forte e configure-o no ambiente do backend; não reutilize o valor de exemplo nem versione o arquivo `.env`.
 
-Após aplicar as migrations V14 e V15, usuários que ainda não registraram o aceite da política de privacidade serão direcionados à tela de consentimento. O aceite fica associado à versão `SANEM-PRIVACY-1.0` e é necessário para acessar as demais rotas protegidas da API.
+Após aplicar as migrations V14 e V15, usuários que ainda não registraram o aceite da política de privacidade serão direcionados à tela de consentimento. O aceite fica associado à versão `SANEM-PRIVACY-1.1` e é necessário para acessar as demais rotas protegidas da API.
+
+## Segurança, perfis, privacidade e desempenho
+
+O backend monta as permissões a partir do perfil persistido do usuário em cada requisição autenticada. Perfis desconhecidos não recebem acesso às rotas funcionais. A matriz de permissões está em backend/src/main/java/com/sanem/config/SecurityConfig.java.
+
+Perfis: Administrator/Administrador gerencia usuários, perfis e operações administrativas; Attendant/Atendente/Collaborator/Colaborador executa operações operacionais permitidas; Evaluator/Avaliador consulta e avalia beneficiários, além das consultas permitidas. O frontend oculta telas e ações, mas o controle real permanece no backend.
+
+As ações de doações, retiradas e avaliação de beneficiários identificam o operador pelo usuário autenticado. IDs de atendente/avaliador enviados pelo navegador não são usados como fonte de identidade.
+
+A versão da política é configurada por PRIVACY_POLICY_VERSION (padrão SANEM-PRIVACY-1.1). O backend só concede permissões de negócio quando o aceite corresponde à versão vigente. O histórico de aceite e revogação é auditado. Usuários podem exportar os dados básicos da própria conta e registrar solicitações de acesso, correção, portabilidade, oposição ou eliminação; administradores acompanham e respondem.
+
+Antes de utilizar dados pessoais reais, a organização responsável deve preencher a identificação do controlador e o canal de privacidade na política, definir as bases legais por finalidade e detalhar compartilhamentos, operadores e retenção. Solicitações de eliminação são registradas para análise e não geram exclusão automática; o controlador precisa validar identidade, obrigações de retenção e resposta. O export atual não é uma exportação completa dos dados de doadores e beneficiários.
+
+O CORS de desenvolvimento é controlado por APP_CORS_ALLOWED_ORIGINS. O padrão permite somente http://localhost:3000 e http://127.0.0.1:3000.
+
+Doações e pontos de coleta usam endpoints paginados, e a migration V18 cria índices para as consultas frequentes. Para comprovar o requisito de 2 segundos, execute tests/performance/sanem-load-test.js conforme docs/performance-test.md com volume de dados representativo. Índices e paginação, por si só, não comprovam o SLA.
+
+### HTTPS
+
+HTTPS não faz parte deste ajuste: o ambiente de desenvolvimento continua em HTTP local. Configure HTTPS, certificados e proxy reverso na implantação de produção antes de disponibilizar o sistema publicamente.
