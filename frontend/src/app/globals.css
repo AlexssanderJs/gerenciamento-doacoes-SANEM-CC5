@@ -130,3 +130,10 @@ h1, h2, h3 {
 }
 
 
+
+@media (max-width: 768px) {
+  :root {
+    --sidebar-width: 0px;
+    --sidebar-offset: 0px;
+  }
+}
