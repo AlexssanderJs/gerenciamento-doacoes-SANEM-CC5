@@ -20,9 +20,20 @@ jobs:
           distribution: temurin
           java-version: "17"
           cache: maven
-      - name: Run Maven tests
+      - name: Run Maven tests (retry transient repository failures)
         working-directory: backend
-        run: mvn --batch-mode --no-transfer-progress test
+        shell: bash
+        run: |
+          for attempt in 1 2 3; do
+            echo "Maven test attempt ${attempt}/3"
+            if mvn --batch-mode --no-transfer-progress -Dmaven.wagon.http.retryHandler.count=5 test; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              sleep $((attempt * 20))
+            fi
+          done
+          exit 1
 
   frontend:
     name: Frontend production build

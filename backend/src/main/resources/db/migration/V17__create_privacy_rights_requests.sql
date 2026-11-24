@@ -1,7 +1,7 @@
 -- Solicitações de exercício de direitos dos titulares (acesso, correção, eliminação etc.).
 CREATE TABLE privacy_request (
     request_id BIGSERIAL PRIMARY KEY,
-    requester_user_id BIGINT NOT NULL REFERENCES app_user(user_id),
+    requester_user_id INTEGER NOT NULL REFERENCES app_user(user_id),
     request_type VARCHAR(20) NOT NULL CHECK (
         request_type IN ('ACCESS', 'CORRECTION', 'DELETION', 'PORTABILITY', 'OBJECTION', 'OTHER')
     ),
