@@ -102,9 +102,9 @@ class ApiService {
 
     // Métodos para Itens (Estoque)
     async getItems(filters = {}) {
-        const queryParams = new URLSearchParams(filters).toString()
-        const endpoint = `/item/all${queryParams ? `?${queryParams}` : ""}`
-        return this.request(endpoint)
+        const query = new URLSearchParams({ page: "0", size: "200", ...filters }).toString()
+        const page = await this.request(`/item?${query}`)
+        return page?.content || []
     }
 
     async getItem(id) {
@@ -137,9 +137,16 @@ class ApiService {
 
     // Métodos para Doações
     async getDonations(filters = {}) {
-        const queryParams = new URLSearchParams(filters).toString()
-        const endpoint = `/donation/${queryParams ? `?${queryParams}` : ""}`
-        return this.request(endpoint)
+        const page = await this.getDonationsPage(filters, 0, 50)
+        return page?.content || []
+    }
+
+    async getDonationsPage(filters = {}, page = 0, size = 50) {
+        const clean = Object.fromEntries(
+            Object.entries(filters).filter(([, value]) => value !== "" && value !== null && value !== undefined)
+        )
+        const query = new URLSearchParams({ ...clean, page: String(page), size: String(size), sort: "donationDate,desc" }).toString()
+        return this.request(`/donation/page?${query}`)
     }
 
     async getDonation(id) {
@@ -170,6 +177,21 @@ class ApiService {
 
     async revokePrivacyConsent() {
         return this.request("/user/me/consent", { method: "DELETE" })
+    }
+
+    async getMyPrivacyData() {
+        return this.request("/user/me/privacy-data")
+    }
+
+    async getMyPrivacyRequests() {
+        return this.request("/privacy-request/me")
+    }
+
+    async createPrivacyRequest(requestData) {
+        return this.request("/privacy-request/me", {
+            method: "POST",
+            body: JSON.stringify(requestData)
+        })
     }
 
     async changeMyPassword(passwordData) {
@@ -401,9 +423,9 @@ class ApiService {
 
     // Métodos para Pontos de Coleta
     async getCollectionPoints(filters = {}) {
-        const queryParams = new URLSearchParams(filters).toString()
-        const endpoint = `/collection-point/all${queryParams ? `?${queryParams}` : ""}`
-        return this.request(endpoint)
+        const query = new URLSearchParams({ page: "0", size: "200", ...filters }).toString()
+        const page = await this.request(`/collection-point?${query}`)
+        return page?.content || []
     }
 
     async getCollectionPoint(id) {
