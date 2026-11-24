@@ -45,3 +45,15 @@ CREATE INDEX IF NOT EXISTS idx_donor_name_prefix
 
 CREATE INDEX IF NOT EXISTS idx_app_user_name_prefix
     ON app_user (lower(name) text_pattern_ops);
+
+-- A listagem ordena pontos por nome; estes índices ajudam o filtro de tipo e a ordenação.
+CREATE INDEX IF NOT EXISTS idx_collection_point_active_name_order
+    ON collection_point (name, collection_point_id)
+    WHERE deleted_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_collection_point_active_type
+    ON collection_point (type)
+    WHERE deleted_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_item_donated_item_id
+    ON item_donated (item_id);

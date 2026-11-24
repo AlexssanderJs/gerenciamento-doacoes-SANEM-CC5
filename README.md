@@ -216,36 +216,44 @@ gerenciamento-doacoes-SANEM/
 
 ## 🔧 Configuração do Banco de Dados
 
-O banco é **PostgreSQL hospedado no NeonDB**. Não há banco local: o backend conecta direto no
-Neon, e o esquema + seed são aplicados pela **Flyway** no startup
-(`backend/src/main/resources/db/migration/V1__init_schema.sql` e `V2__seed_data.sql`).
+O SANEM utiliza PostgreSQL. Em desenvolvimento, o Docker Compose sobe um PostgreSQL 16 local automaticamente. Também é possível executar o backend diretamente e apontá-lo para um banco PostgreSQL externo, como NeonDB.
 
-### Configuração das Credenciais
+### Desenvolvimento com Docker Compose (recomendado)
 
-As credenciais vêm de variáveis de ambiente (nunca commitadas). Copie `.env.example` para `.env`
-e preencha com os dados do Neon:
+1. Copie .env.example para .env.
+2. Gere e configure um JWT_SECRET aleatório com pelo menos 32 bytes.
+3. Inicie os serviços na raiz do repositório:
 
-```bash
-SPRING_DATASOURCE_URL=jdbc:postgresql://<host-neon>/<database>?sslmode=require
-SPRING_DATASOURCE_USERNAME=<usuario-neon>
-SPRING_DATASOURCE_PASSWORD=<senha-neon>
-```
+    docker compose up -d --build
 
-> O Neon **exige SSL** — mantenha `?sslmode=require` na URL.
-> O `application.yml` já lê essas variáveis (com fallback para um Postgres local em dev).
+O Compose inicia postgres, backend, frontend e mailpit. O backend aguarda o healthcheck do PostgreSQL e se conecta a postgres:5432/sanem dentro da rede Docker. As migrations Flyway criam o esquema e o profile dev insere dados de demonstração.
 
-### Dados de exemplo (dev) x produção
+Variáveis relevantes no .env:
 
-O comportamento do seed é controlado pelo profile do Spring (`SPRING_PROFILES_ACTIVE`):
+- POSTGRES_PASSWORD: senha do PostgreSQL local.
+- POSTGRES_PORT: porta publicada no host (padrão 5432).
+- JWT_SECRET: segredo JWT aleatório com pelo menos 32 bytes.
+- PRIVACY_POLICY_VERSION: versão vigente da política (padrão SANEM-PRIVACY-1.1).
+- APP_CORS_ALLOWED_ORIGINS: origens frontend permitidas em desenvolvimento.
 
-- **`dev`** — a Flyway aplica o schema (`db/migration`) **e** o seed de exemplo (`db/seed`:
-  usuários, doadores, beneficiários, pontos de coleta). Use no banco de desenvolvimento do Neon.
-- **`prod`** (ou qualquer valor diferente de `dev`) — a Flyway aplica **somente o schema**;
-  nenhum dado é inserido na primeira subida. Os usuários/dados são cadastrados manualmente.
+### Backend executado diretamente ou PostgreSQL externo
 
-Assim, o banco de **produção** do Neon sobe limpo, e o de **desenvolvimento** já vem populado
-para testes. (A configuração de limite de retirada é criada automaticamente pela aplicação quando
-necessária, então produção funciona sem seed.)
+Para executar o backend diretamente, configure SPRING_DATASOURCE_URL, SPRING_DATASOURCE_USERNAME e SPRING_DATASOURCE_PASSWORD no ambiente do processo. Exemplo com NeonDB:
+
+    SPRING_DATASOURCE_URL=jdbc:postgresql://<host-neon>/<database>?sslmode=require
+    SPRING_DATASOURCE_USERNAME=<usuario>
+    SPRING_DATASOURCE_PASSWORD=<senha>
+    JWT_SECRET=<segredo-aleatorio-com-32-bytes-ou-mais>
+    PRIVACY_POLICY_VERSION=SANEM-PRIVACY-1.1
+
+Depois execute mvn spring-boot:run na pasta backend. Para Neon, mantenha sslmode=require.
+
+### Seeds e ambientes
+
+- dev: aplica migrations e dados de demonstração.
+- prod: aplica somente migrations, sem seed de demonstração.
+
+Não utilize os usuários e senhas de demonstração em produção. Configure credenciais próprias e segredos fortes.
 
 ## 📚 Funcionalidades
 
