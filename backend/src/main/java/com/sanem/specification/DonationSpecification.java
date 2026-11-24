@@ -47,6 +47,9 @@ public class DonationSpecification {
         return (root, query, cb) -> {
             if (itemName == null || itemName.trim().isEmpty()) return null;
             // Faz o Join de Donation para ItemDonated, e depois de ItemDonated para Item
+            // Uma doação pode ter várias linhas correspondentes; distinct evita
+            // duplicações de registros e páginas inconsistentes.
+            query.distinct(true);
             var itemDonated = root.join("items", JoinType.INNER);
             var item = itemDonated.join("item", JoinType.INNER);
             return cb.like(cb.lower(item.get("description")), itemName.trim().toLowerCase() + "%");
