@@ -153,7 +153,7 @@ public class ItemService {
                 return criteriaBuilder.conjunction();
             }
 
-            String pattern = "%" + itemFilterDTO.searchTerm().toLowerCase() + "%";
+            String pattern = itemFilterDTO.searchTerm().trim().toLowerCase() + "%";
             
             return criteriaBuilder.or(
                 criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), pattern),
