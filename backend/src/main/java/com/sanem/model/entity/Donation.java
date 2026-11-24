@@ -14,6 +14,8 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
+import java.util.ArrayList;
+import org.hibernate.annotations.BatchSize;
 
 @Entity
 @Getter
@@ -38,8 +40,9 @@ public class Donation implements SoftDeletable {
     @JoinColumn(name = "donor_id")
     private Donor donor;
 
-    @OneToMany(mappedBy = "donation", fetch = FetchType.EAGER)
-    private List<ItemDonated> items;
+    @OneToMany(mappedBy = "donation", fetch = FetchType.LAZY)
+    @BatchSize(size = 50)
+    private List<ItemDonated> items = new ArrayList<>();
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;

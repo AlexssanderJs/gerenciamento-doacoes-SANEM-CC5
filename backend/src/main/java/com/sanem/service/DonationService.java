@@ -79,7 +79,8 @@ public class DonationService {
             itemDonated.setQuantity(itemDTO.quantity());
             itemDonated.setCategory(category);
             itemDonated.setConservationState(itemDTO.conservationState());
-            itemDonatedRepository.save(itemDonated);
+            ItemDonated savedItemDonated = itemDonatedRepository.save(itemDonated);
+            donationSalva.getItems().add(savedItemDonated);
         }
 
         return donationDTOMapper.convert(donationSalva);
