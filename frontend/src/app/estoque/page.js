@@ -10,6 +10,8 @@ import { useApiList } from '../../hooks/useApi';
 import { FaPlus, FaPrint, FaTag, FaEdit, FaTrash, FaExclamationTriangle, FaFilter } from 'react-icons/fa';
 import { useNotification } from '../../components/notifications/NotificationProvider';
 import ConfirmationModal from '../../components/confirmation/ConfirmationModal';
+import authService from '../../services/authService';
+import { normalizeRole } from '../../utils/permissions';
 
 const initialProductState = {
   nome: '',
@@ -26,6 +28,7 @@ const initialProductState = {
 
 export default function EstoquePage() {
   const { showNotification } = useNotification();
+  const isAdmin = normalizeRole(authService.getUser()?.role) === "ADMINISTRATOR";
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
@@ -571,14 +574,16 @@ export default function EstoquePage() {
                         >
                           <FaTag />
                         </button>
-                        <button
-                          className={styles.deleteButton}
-                          onClick={() => openDeleteModal(item)}
-                          disabled={loading}
-                          title="Excluir"
-                        >
-                          <FaTrash />
-                        </button>
+                        {isAdmin && (
+                          <button
+                            className={styles.deleteButton}
+                            onClick={() => openDeleteModal(item)}
+                            disabled={loading}
+                            title="Excluir"
+                          >
+                            <FaTrash />
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))

@@ -10,6 +10,7 @@ import { FaPlus, FaTrash, FaMinus, FaChevronDown, FaTimes, FaFilter } from "reac
 import ConfirmationModal from "../../../components/confirmation/ConfirmationModal";
 import { mapBeneficiaryFromBackend, mapItemFromBackend } from "../../../services/dataMapper";
 import authService from "../../../services/authService";
+import { normalizeRole } from "../../../utils/permissions";
 
 export default function ListaRetiradasPage() {
   const router = useRouter();
@@ -33,7 +34,7 @@ export default function ListaRetiradasPage() {
 
   const currentUser = authService.getUser();
 
-  const isAdmin = currentUser?.role?.toUpperCase() === "ADMINISTRATOR";
+  const isAdmin = normalizeRole(currentUser?.role) === "ADMINISTRATOR";
 
   // ==========================================
   // LÓGICA DE FILTROS APRIMORADA
@@ -668,13 +669,15 @@ export default function ListaRetiradasPage() {
                       </td>
                       <td>
                         <div className={styles.actionButtons}>
-                          <button
-                            className={styles.deleteButton}
-                            onClick={() => handleDelete(withdrawal.withdrawalId)}
-                            title="Excluir"
-                          >
-                            <FaTrash />
-                          </button>
+                          {isAdmin && (
+                            <button
+                              className={styles.deleteButton}
+                              onClick={() => handleDelete(withdrawal.withdrawalId)}
+                              title="Excluir"
+                            >
+                              <FaTrash />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

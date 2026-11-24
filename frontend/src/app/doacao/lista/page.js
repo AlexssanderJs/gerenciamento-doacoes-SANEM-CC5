@@ -14,9 +14,11 @@ import {
 } from "../../../services/dataMapper"
 import authService from "../../../services/authService"
 import NewItemModal from "../../../components/items/NewItemModal"
+import { normalizeRole } from "../../../utils/permissions"
 
 export default function ListaDoacoesPage() {
     const { showNotification } = useNotification()
+    const isAdmin = normalizeRole(authService.getUser()?.role) === "ADMINISTRATOR"
 
     const [donations, setDonations] = useState([])
     const [loading, setLoading] = useState(true)
@@ -592,13 +594,15 @@ export default function ListaDoacoesPage() {
                                             </td>
                                             <td>
                                                 <div className={styles.actionButtons}>
-                                                    <button
-                                                        className={styles.deleteButton}
-                                                        onClick={() => handleDelete(donation.donationId || donation.id)}
-                                                        title="Excluir"
-                                                    >
-                                                        <FaTrash />
-                                                    </button>
+                                                    {isAdmin && (
+                                                        <button
+                                                            className={styles.deleteButton}
+                                                            onClick={() => handleDelete(donation.donationId || donation.id)}
+                                                            title="Excluir"
+                                                        >
+                                                            <FaTrash />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
