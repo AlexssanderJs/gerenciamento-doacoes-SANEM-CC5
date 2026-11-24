@@ -216,36 +216,44 @@ gerenciamento-doacoes-SANEM/
 
 ## 🔧 Configuração do Banco de Dados
 
-O banco é **PostgreSQL hospedado no NeonDB**. Não há banco local: o backend conecta direto no
-Neon, e o esquema + seed são aplicados pela **Flyway** no startup
-(`backend/src/main/resources/db/migration/V1__init_schema.sql` e `V2__seed_data.sql`).
+O SANEM utiliza PostgreSQL. Em desenvolvimento, o Docker Compose sobe um PostgreSQL 16 local automaticamente. Também é possível executar o backend diretamente e apontá-lo para um banco PostgreSQL externo, como NeonDB.
 
-### Configuração das Credenciais
+### Desenvolvimento com Docker Compose (recomendado)
 
-As credenciais vêm de variáveis de ambiente (nunca commitadas). Copie `.env.example` para `.env`
-e preencha com os dados do Neon:
+1. Copie .env.example para .env.
+2. Gere e configure um JWT_SECRET aleatório com pelo menos 32 bytes.
+3. Inicie os serviços na raiz do repositório:
 
-```bash
-SPRING_DATASOURCE_URL=jdbc:postgresql://<host-neon>/<database>?sslmode=require
-SPRING_DATASOURCE_USERNAME=<usuario-neon>
-SPRING_DATASOURCE_PASSWORD=<senha-neon>
-```
+    docker compose up -d --build
 
-> O Neon **exige SSL** — mantenha `?sslmode=require` na URL.
-> O `application.yml` já lê essas variáveis (com fallback para um Postgres local em dev).
+O Compose inicia postgres, backend, frontend e mailpit. O backend aguarda o healthcheck do PostgreSQL e se conecta a postgres:5432/sanem dentro da rede Docker. As migrations Flyway criam o esquema e o profile dev insere dados de demonstração.
 
-### Dados de exemplo (dev) x produção
+Variáveis relevantes no .env:
 
-O comportamento do seed é controlado pelo profile do Spring (`SPRING_PROFILES_ACTIVE`):
+- POSTGRES_PASSWORD: senha do PostgreSQL local.
+- POSTGRES_PORT: porta publicada no host (padrão 5432).
+- JWT_SECRET: segredo JWT aleatório com pelo menos 32 bytes.
+- PRIVACY_POLICY_VERSION: versão vigente da política (padrão SANEM-PRIVACY-1.1).
+- APP_CORS_ALLOWED_ORIGINS: origens frontend permitidas em desenvolvimento.
 
-- **`dev`** — a Flyway aplica o schema (`db/migration`) **e** o seed de exemplo (`db/seed`:
-  usuários, doadores, beneficiários, pontos de coleta). Use no banco de desenvolvimento do Neon.
-- **`prod`** (ou qualquer valor diferente de `dev`) — a Flyway aplica **somente o schema**;
-  nenhum dado é inserido na primeira subida. Os usuários/dados são cadastrados manualmente.
+### Backend executado diretamente ou PostgreSQL externo
 
-Assim, o banco de **produção** do Neon sobe limpo, e o de **desenvolvimento** já vem populado
-para testes. (A configuração de limite de retirada é criada automaticamente pela aplicação quando
-necessária, então produção funciona sem seed.)
+Para executar o backend diretamente, configure SPRING_DATASOURCE_URL, SPRING_DATASOURCE_USERNAME e SPRING_DATASOURCE_PASSWORD no ambiente do processo. Exemplo com NeonDB:
+
+    SPRING_DATASOURCE_URL=jdbc:postgresql://<host-neon>/<database>?sslmode=require
+    SPRING_DATASOURCE_USERNAME=<usuario>
+    SPRING_DATASOURCE_PASSWORD=<senha>
+    JWT_SECRET=<segredo-aleatorio-com-32-bytes-ou-mais>
+    PRIVACY_POLICY_VERSION=SANEM-PRIVACY-1.1
+
+Depois execute mvn spring-boot:run na pasta backend. Para Neon, mantenha sslmode=require.
+
+### Seeds e ambientes
+
+- dev: aplica migrations e dados de demonstração.
+- prod: aplica somente migrations, sem seed de demonstração.
+
+Não utilize os usuários e senhas de demonstração em produção. Configure credenciais próprias e segredos fortes.
 
 ## 📚 Funcionalidades
 
@@ -283,7 +291,7 @@ necessária, então produção funciona sem seed.)
 
 #### 👨‍💼 Administração e Relatórios
 
-- ✅ Sistema de permissões (Atendente/Administrador)
+- ✅ Sistema de permissões (Administrador/Atendente/Avaliador)
 - ✅ Gestão de usuários e perfis
 - ✅ Relatórios de doações, distribuições e posição de estoque (CSV/PDF)
 
@@ -341,4 +349,24 @@ npm run build
 
 O backend exige um segredo JWT configurado na variável de ambiente `JWT_SECRET`, com pelo menos 32 bytes. Gere um valor aleatório forte e configure-o no ambiente do backend; não reutilize o valor de exemplo nem versione o arquivo `.env`.
 
-Após aplicar as migrations V14 e V15, usuários que ainda não registraram o aceite da política de privacidade serão direcionados à tela de consentimento. O aceite fica associado à versão `SANEM-PRIVACY-1.0` e é necessário para acessar as demais rotas protegidas da API.
+Após aplicar as migrations V14 e V15, usuários que ainda não registraram o aceite da política de privacidade serão direcionados à tela de consentimento. O aceite fica associado à versão `SANEM-PRIVACY-1.1` e é necessário para acessar as demais rotas protegidas da API.
+
+## Segurança, perfis, privacidade e desempenho
+
+O backend monta as permissões a partir do perfil persistido do usuário em cada requisição autenticada. Perfis desconhecidos não recebem acesso às rotas funcionais. A matriz de permissões está em backend/src/main/java/com/sanem/config/SecurityConfig.java.
+
+Perfis: Administrator/Administrador gerencia usuários, perfis e operações administrativas; Attendant/Atendente/Collaborator/Colaborador executa operações operacionais permitidas; Evaluator/Avaliador consulta e avalia beneficiários, além das consultas permitidas. O frontend oculta telas e ações, mas o controle real permanece no backend.
+
+As ações de doações, retiradas e avaliação de beneficiários identificam o operador pelo usuário autenticado. IDs de atendente/avaliador enviados pelo navegador não são usados como fonte de identidade.
+
+A versão da política é configurada por PRIVACY_POLICY_VERSION (padrão SANEM-PRIVACY-1.1). O backend só concede permissões de negócio quando o aceite corresponde à versão vigente. O histórico de aceite e revogação é auditado. Usuários podem exportar os dados básicos da própria conta e registrar solicitações de acesso, correção, portabilidade, oposição ou eliminação; administradores acompanham e respondem.
+
+Antes de utilizar dados pessoais reais, a organização responsável deve preencher a identificação do controlador e o canal de privacidade na política, definir as bases legais por finalidade e detalhar compartilhamentos, operadores e retenção. Solicitações de eliminação são registradas para análise e não geram exclusão automática; o controlador precisa validar identidade, obrigações de retenção e resposta. O export atual não é uma exportação completa dos dados de doadores e beneficiários.
+
+O CORS de desenvolvimento é controlado por APP_CORS_ALLOWED_ORIGINS. O padrão permite somente http://localhost:3000 e http://127.0.0.1:3000.
+
+Doações e pontos de coleta usam endpoints paginados, e a migration V18 cria índices para as consultas frequentes. Para comprovar o requisito de 2 segundos, execute tests/performance/sanem-load-test.js conforme docs/performance-test.md com volume de dados representativo. Índices e paginação, por si só, não comprovam o SLA.
+
+### HTTPS
+
+HTTPS não faz parte deste ajuste: o ambiente de desenvolvimento continua em HTTP local. Configure HTTPS, certificados e proxy reverso na implantação de produção antes de disponibilizar o sistema publicamente.

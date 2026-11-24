@@ -6,6 +6,8 @@ import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.web.filter.CharacterEncodingFilter;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.web.config.PageableHandlerMethodArgumentResolverCustomizer;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -19,6 +21,14 @@ public class WebConfig implements WebMvcConfigurer {
         filter.setEncoding("UTF-8");
         filter.setForceEncoding(true);
         return filter;
+    }
+
+    @Bean
+    public PageableHandlerMethodArgumentResolverCustomizer pageableCustomizer() {
+        return resolver -> {
+            resolver.setMaxPageSize(200);
+            resolver.setFallbackPageable(PageRequest.of(0, 50));
+        };
     }
 
     @Override

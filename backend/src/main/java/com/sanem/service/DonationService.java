@@ -19,6 +19,8 @@ import com.sanem.model.entity.ItemDonated;
 import com.sanem.repository.ItemDonatedRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification; 
 import org.springframework.transaction.annotation.Transactional;
 
@@ -146,6 +148,33 @@ public class DonationService {
                 .distinct()
                 .map(donationDTOMapper::convert)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<DonationDTO> findAllFiltered(
+            Pageable pageable,
+            Date startDate,
+            Date endDate,
+            String donorName,
+            String attendantName,
+            String itemName
+    ) {
+        if (startDate != null && endDate != null && startDate.after(endDate)) {
+            throw new IllegalArgumentException("A data inicial não pode ser posterior à data final.");
+        }
+
+        Specification<Donation> spec = Specification.where(DonationSpecification.isNotDeleted())
+                .and(DonationSpecification.betweenDates(startDate, endDate))
+                .and(DonationSpecification.hasDonorName(donorName))
+                .and(DonationSpecification.hasAttendantName(attendantName))
+                .and(DonationSpecification.hasItemName(itemName));
+
+        return donationRepository.findAll(spec, pageable).map(donationDTOMapper::convert);
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> findDistinctAttendantNames() {
+        return donationRepository.findDistinctActiveReceiverNames();
     }
 
     public Donation getOrThrowException(Long id) {

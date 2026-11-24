@@ -30,7 +30,7 @@ public class DonationSpecification {
             if (donorName == null || donorName.trim().isEmpty()) return null;
             // Faz o Join com a tabela Donor
             var donor = root.join("donor", JoinType.INNER);
-            return cb.like(cb.lower(donor.get("name")), "%" + donorName.toLowerCase() + "%");
+            return cb.like(cb.lower(donor.get("name")), donorName.trim().toLowerCase() + "%");
         };
     }
 
@@ -39,7 +39,7 @@ public class DonationSpecification {
             if (attendantName == null || attendantName.trim().isEmpty()) return null;
             // Faz o Join com a tabela AppUser (receiverUser)
             var user = root.join("receiverUser", JoinType.INNER);
-            return cb.like(cb.lower(user.get("name")), "%" + attendantName.toLowerCase() + "%");
+            return cb.like(cb.lower(user.get("name")), attendantName.trim().toLowerCase() + "%");
         };
     }
 
@@ -47,9 +47,15 @@ public class DonationSpecification {
         return (root, query, cb) -> {
             if (itemName == null || itemName.trim().isEmpty()) return null;
             // Faz o Join de Donation para ItemDonated, e depois de ItemDonated para Item
+            // Uma doação pode ter várias linhas correspondentes; distinct evita
+            // duplicações de registros e páginas inconsistentes.
+            query.distinct(true);
             var itemDonated = root.join("items", JoinType.INNER);
             var item = itemDonated.join("item", JoinType.INNER);
-            return cb.like(cb.lower(item.get("description")), "%" + itemName.toLowerCase() + "%");
+            return cb.and(
+                    cb.isNull(item.get("deletedAt")),
+                    cb.like(cb.lower(item.get("description")), itemName.trim().toLowerCase() + "%")
+            );
         };
     }
 }

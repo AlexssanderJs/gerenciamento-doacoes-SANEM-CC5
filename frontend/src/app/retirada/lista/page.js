@@ -10,6 +10,7 @@ import { FaPlus, FaTrash, FaMinus, FaChevronDown, FaTimes, FaFilter } from "reac
 import ConfirmationModal from "../../../components/confirmation/ConfirmationModal";
 import { mapBeneficiaryFromBackend, mapItemFromBackend } from "../../../services/dataMapper";
 import authService from "../../../services/authService";
+import { normalizeRole } from "../../../utils/permissions";
 
 export default function ListaRetiradasPage() {
   const router = useRouter();
@@ -31,9 +32,11 @@ export default function ListaRetiradasPage() {
   const [limitInfo, setLimitInfo] = useState(null);
   const [limitInfoStatus, setLimitInfoStatus] = useState("idle");
 
-  const currentUser = authService.getUser();
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  const isAdmin = currentUser?.role?.toUpperCase() === "ADMINISTRATOR";
+  useEffect(() => {
+    setIsAdmin(normalizeRole(authService.getUser()?.role) === "ADMINISTRATOR");
+  }, []);
 
   // ==========================================
   // LÓGICA DE FILTROS APRIMORADA
@@ -668,13 +671,15 @@ export default function ListaRetiradasPage() {
                       </td>
                       <td>
                         <div className={styles.actionButtons}>
-                          <button
-                            className={styles.deleteButton}
-                            onClick={() => handleDelete(withdrawal.withdrawalId)}
-                            title="Excluir"
-                          >
-                            <FaTrash />
-                          </button>
+                          {isAdmin && (
+                            <button
+                              className={styles.deleteButton}
+                              onClick={() => handleDelete(withdrawal.withdrawalId)}
+                              title="Excluir"
+                            >
+                              <FaTrash />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

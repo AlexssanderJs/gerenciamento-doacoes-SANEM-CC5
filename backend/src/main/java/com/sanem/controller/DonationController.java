@@ -11,6 +11,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 import java.util.Date;
 import java.util.List;
@@ -44,6 +48,24 @@ public class DonationController {
             @RequestParam(required = false) String itemName
     ) {
         return ResponseEntity.ok(donationService.findAllFiltered(startDate, endDate, donorName, attendantName, itemName));
+    }
+
+    @GetMapping("/page")
+    public ResponseEntity<Page<DonationDTO>> findAllPaged(
+            @PageableDefault(size = 50, sort = "donationDate", direction = Sort.Direction.DESC) Pageable pageable,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate,
+            @RequestParam(required = false) String donorName,
+            @RequestParam(required = false) String attendantName,
+            @RequestParam(required = false) String itemName
+    ) {
+        return ResponseEntity.ok(donationService.findAllFiltered(
+                pageable, startDate, endDate, donorName, attendantName, itemName));
+    }
+
+    @GetMapping("/attendants")
+    public ResponseEntity<List<String>> findAttendantNames() {
+        return ResponseEntity.ok(donationService.findDistinctAttendantNames());
     }
 
     @DeleteMapping("/{id}")

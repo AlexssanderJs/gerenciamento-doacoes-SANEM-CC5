@@ -1,13 +1,15 @@
 package com.sanem.controller;
 
-import com.sanem.util.HttpUtils;
+import com.sanem.model.dto.AppUserDTO;
 import com.sanem.model.dto.AppUserFormDTO;
 import com.sanem.model.dto.AppUserUpdateDTO;
+import com.sanem.model.dto.PrivacyDataExportDTO;
 import com.sanem.model.dto.ChangePasswordRequestDTO;
-import com.sanem.model.dto.AppUserDTO;
 import com.sanem.model.entity.AppUser;
 import com.sanem.service.AppUserService;
 import com.sanem.service.AuthService;
+import com.sanem.util.HttpUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -24,7 +26,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 @RequestMapping("/user")
 public class AppUserController {
-
     private final AppUserService userService;
     private final AuthService authService;
 
@@ -42,72 +43,71 @@ public class AppUserController {
     }
 
     @PostMapping("/me/consent")
-    public ResponseEntity<Map<String, Object>> acceptPrivacyConsent() {
-        authService.acceptPrivacyConsent();
-        return ResponseEntity.ok(Map.of("accepted", true, "version", "SANEM-PRIVACY-1.0"));
+    public ResponseEntity<Map<String, Object>> acceptPrivacyConsent(HttpServletRequest request) {
+        authService.acceptPrivacyConsent(request.getRemoteAddr(), request.getHeader("User-Agent"));
+        return ResponseEntity.ok(Map.of(
+                "accepted", true,
+                "version", authService.getCurrentPrivacyPolicyVersion()
+        ));
     }
 
     @DeleteMapping("/me/consent")
-    public ResponseEntity<Map<String, Boolean>> revokePrivacyConsent() {
-        authService.revokePrivacyConsent();
+    public ResponseEntity<Map<String, Boolean>> revokePrivacyConsent(HttpServletRequest request) {
+        authService.revokePrivacyConsent(request.getRemoteAddr(), request.getHeader("User-Agent"));
         return ResponseEntity.ok(Map.of("accepted", false));
+    }
+
+    @GetMapping("/me/privacy-data")
+    public ResponseEntity<PrivacyDataExportDTO> exportMyPrivacyData() {
+        return ResponseEntity.ok(authService.getMyPrivacyData());
     }
 
     @GetMapping
     public ResponseEntity<Page<AppUserDTO>> listPaged(Pageable pageable) {
         Page<AppUser> userPage = userService.list(pageable);
-        Page<AppUserDTO> userDTOPage = userService.generateUserDTOPage(userPage);
-
-        return ResponseEntity.ok(userDTOPage);
+        return ResponseEntity.ok(userService.generateUserDTOPage(userPage));
     }
 
     @GetMapping("/all")
     public ResponseEntity<List<AppUserDTO>> list() {
-        List<AppUser> userList = userService.list();
-        List<AppUserDTO> userDTOList = userService.generateUserDTOList(userList);
-
-        return ResponseEntity.ok(userDTOList);
+        return ResponseEntity.ok(userService.generateUserDTOList(userService.list()));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<AppUserDTO> get(@PathVariable Long id) {
         AppUser user = userService.getOrNull(id);
-        if(user == null) return ResponseEntity.notFound().build();
-
-        AppUserDTO userDTO = userService.generateUserDTO(user);
-
-        return ResponseEntity.ok(userDTO);
+        return user == null ? ResponseEntity.notFound().build()
+                : ResponseEntity.ok(userService.generateUserDTO(user));
     }
 
     @PostMapping
-    public ResponseEntity<AppUserDTO> create(@RequestBody @Valid AppUserFormDTO appUserFormDTO, UriComponentsBuilder uriComponentsBuilder) {
-        AppUser user = userService.generateUser(appUserFormDTO);
+    public ResponseEntity<AppUserDTO> create(
+            @RequestBody @Valid AppUserFormDTO form,
+            UriComponentsBuilder uriBuilder
+    ) {
+        AppUser user = userService.generateUser(form);
         userService.save(user);
-
-        URI uri = HttpUtils.createURI(uriComponentsBuilder, "profile", user.getUserId());
-
+        URI uri = HttpUtils.createURI(uriBuilder, "user", user.getUserId());
         return ResponseEntity.created(uri).body(userService.generateUserDTO(user));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody @Valid AppUserUpdateDTO appUserUpdateDTO) {
+    public ResponseEntity<Void> update(
+            @PathVariable Long id,
+            @RequestBody @Valid AppUserUpdateDTO form
+    ) {
         AppUser user = userService.getOrNull(id);
-        if(user == null) return ResponseEntity.notFound().build();
-
-        userService.updateUser(user, appUserUpdateDTO);
-
+        if (user == null) return ResponseEntity.notFound().build();
+        userService.updateUser(user, form);
         userService.save(user);
-
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         AppUser user = userService.getOrNull(id);
-        if(user == null) return ResponseEntity.notFound().build();
-
+        if (user == null) return ResponseEntity.notFound().build();
         userService.delete(user);
-
         return ResponseEntity.noContent().build();
     }
 }

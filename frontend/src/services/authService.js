@@ -122,7 +122,7 @@ class AuthService {
     );
   }
 
-  updatePrivacyConsent(accepted, version = 'SANEM-PRIVACY-1.0') {
+  updatePrivacyConsent(accepted, version = 'SANEM-PRIVACY-1.1') {
     const token = this.getToken();
     const user = this.getUser();
     if (!token || !user) return;
@@ -159,6 +159,20 @@ class AuthService {
         return false;
       }
 
+      const session = await response.json().catch(() => null);
+      if (!session?.valid) {
+        this.clearAuthData();
+        return false;
+      }
+
+      const currentUser = this.getUser() || {};
+      this.setAuthData(token, {
+        ...currentUser,
+        privacyConsent: Boolean(session.privacyConsent),
+        privacyConsentVersion: session.privacyConsentVersion || null,
+        currentPrivacyPolicyVersion: session.currentPrivacyPolicyVersion || null,
+        role: session.role || currentUser.role,
+      });
       return true;
     } catch (error) {
       console.error('Erro na validação do token:', error);

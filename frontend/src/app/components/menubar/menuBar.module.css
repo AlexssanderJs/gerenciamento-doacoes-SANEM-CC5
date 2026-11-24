@@ -207,3 +207,40 @@
   color: #fff;
   outline: none;
 }
+
+.mobileMenuToggle {
+  display: none;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--color-text, #263238);
+  border: 1px solid var(--color-border, #d5dce5);
+  border-radius: 9px;
+  box-shadow: none;
+  font-size: 1.2rem;
+}
+.mobileMenuToggle:hover { background: #f1f5f9; color: var(--color-primary, #1976d2); }
+
+@media (max-width: 768px) {
+  .menuBar {
+    width: 100%;
+    left: 0;
+    height: 58px;
+    justify-content: space-between;
+    padding: 0 10px;
+  }
+  .rightSection { width: 100%; margin: 0; gap: 12px; justify-content: flex-end; }
+  .mobileMenuToggle { display: inline-flex; margin-right: auto; }
+  .userInfoButton { padding: 6px 4px; }
+  .userName { max-width: 105px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tourButton { padding: 7px 9px; }
+}
+@media (max-width: 480px) {
+  .rightSection { gap: 8px; }
+  .userName { display: none; }
+  .tourButton span { display: none; }
+  .tourButton { padding: 8px 10px; }
+}
