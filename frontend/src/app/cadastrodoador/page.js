@@ -10,7 +10,7 @@ import { useApi } from "../../hooks/useApi";
 import { useNotification } from "../../components/notifications/NotificationProvider";
 import { validateCPForCNPJ, validateEmail, validatePhone } from "../../utils/validators";
 import { maskCPForCNPJ, maskPhone, unmask } from "../../utils/masks";
-import PrivacyConsentFields, { DEFAULT_PRIVACY, validatePrivacy } from "../components/privacy/PrivacyConsentFields";
+import PrivacyConsentFields, { DEFAULT_PRIVACY, validatePrivacy } from "../../components/privacy/PrivacyConsentFields";
 
 const CadastroDoador = () => {
   const [form, setForm] = useState({

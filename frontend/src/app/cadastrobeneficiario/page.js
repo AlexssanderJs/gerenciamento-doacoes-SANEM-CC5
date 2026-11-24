@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import styles from "./cadastrobeneficiario.module.css";
 import apiService from "../../services/api";
 import { mapBeneficiaryToBackend } from "../../services/dataMapper";
-import PrivacyConsentFields, { DEFAULT_PRIVACY, validatePrivacy } from "../components/privacy/PrivacyConsentFields";
+import PrivacyConsentFields, { DEFAULT_PRIVACY, validatePrivacy } from "../../components/privacy/PrivacyConsentFields";
 import { useApi } from "../../hooks/useApi";
 import { useNotification } from "../../components/notifications/NotificationProvider";
 import { validateCPF, validateEmail, validatePhone } from "../../utils/validators";
