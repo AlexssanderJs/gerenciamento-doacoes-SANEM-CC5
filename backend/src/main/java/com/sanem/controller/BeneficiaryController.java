@@ -9,6 +9,7 @@ import com.sanem.service.BeneficiaryService;
 import com.sanem.model.dto.WithdrawalFilterDTO;
 import com.sanem.model.dto.WithdrawalDTO;
 import com.sanem.service.WithdrawalService;
+import com.sanem.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -27,6 +28,7 @@ public class BeneficiaryController {
 
     private final BeneficiaryService beneficiaryService;
     private final WithdrawalService withdrawalService;
+    private final AuthService authService;
 
     @GetMapping
     public ResponseEntity<Page<BeneficiaryDTO>> listPaged(Pageable pageable,
@@ -79,6 +81,24 @@ public class BeneficiaryController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/{id}/privacy-export")
+    public ResponseEntity<com.sanem.model.dto.DataSubjectExportDTO> exportData(@PathVariable Long id) {
+        Beneficiary beneficiary = beneficiaryService.getOrNull(id);
+        if(beneficiary == null) return ResponseEntity.notFound().build();
+
+        return ResponseEntity.ok(beneficiaryService.exportData(beneficiary));
+    }
+
+    @PostMapping("/{id}/anonymize")
+    public ResponseEntity<Void> anonymize(@PathVariable Long id) {
+        Beneficiary beneficiary = beneficiaryService.getOrNull(id);
+        if(beneficiary == null) return ResponseEntity.notFound().build();
+
+        beneficiaryService.anonymize(beneficiary);
+
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         Beneficiary beneficiary = beneficiaryService.getOrNull(id);
@@ -91,12 +111,12 @@ public class BeneficiaryController {
     }
 
     @PatchMapping("/{id}/approve")
-    public ResponseEntity<BeneficiaryDTO> approve(@PathVariable Long id, @RequestParam Long approverUserId) {
+    public ResponseEntity<BeneficiaryDTO> approve(@PathVariable Long id, @RequestParam(required = false) Long ignoredApproverUserId) {
         Beneficiary beneficiary = beneficiaryService.getOrNull(id);
         if (beneficiary == null)
             return ResponseEntity.notFound().build();
 
-        beneficiaryService.approveBeneficiary(id, approverUserId);
+        beneficiaryService.approveBeneficiary(id, authService.getCurrentUser().getUserId());
 
         Beneficiary updatedBeneficiary = beneficiaryService.getOrThrowException(id);
         return ResponseEntity.ok(beneficiaryService.generateBeneficiaryDTO(updatedBeneficiary));
@@ -108,7 +128,7 @@ public class BeneficiaryController {
         if (beneficiary == null)
             return ResponseEntity.notFound().build();
 
-        beneficiaryService.rejectBeneficiary(id, approverUserId);
+        beneficiaryService.rejectBeneficiary(id, authService.getCurrentUser().getUserId());
 
         Beneficiary updatedBeneficiary = beneficiaryService.getOrThrowException(id);
         return ResponseEntity.ok(beneficiaryService.generateBeneficiaryDTO(updatedBeneficiary));
@@ -120,7 +140,7 @@ public class BeneficiaryController {
         if (beneficiary == null)
             return ResponseEntity.notFound().build();
 
-        beneficiaryService.inactivateBeneficiary(id, approverUserId);
+        beneficiaryService.inactivateBeneficiary(id, authService.getCurrentUser().getUserId());
 
         Beneficiary updatedBeneficiary = beneficiaryService.getOrThrowException(id);
         return ResponseEntity.ok(beneficiaryService.generateBeneficiaryDTO(updatedBeneficiary));
@@ -132,7 +152,7 @@ public class BeneficiaryController {
         if (beneficiary == null)
             return ResponseEntity.notFound().build();
 
-        beneficiaryService.reactivateBeneficiary(id, approverUserId);
+        beneficiaryService.reactivateBeneficiary(id, authService.getCurrentUser().getUserId());
 
         Beneficiary updatedBeneficiary = beneficiaryService.getOrThrowException(id);
         return ResponseEntity.ok(beneficiaryService.generateBeneficiaryDTO(updatedBeneficiary));

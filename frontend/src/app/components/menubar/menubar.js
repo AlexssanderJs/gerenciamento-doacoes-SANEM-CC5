@@ -9,7 +9,7 @@ import ChangePasswordModal from '../../../components/profile/ChangePasswordModal
 import NotificationBell from '../../../components/notifications/NotificationBell';
 import { useOnboarding } from '../../../components/onboarding/OnboardingProvider';
 import { translateProfileName } from '../../../utils/validators';
-import { FaUserCircle, FaKey, FaSignOutAlt, FaRoute } from 'react-icons/fa';
+import { FaUserCircle, FaKey, FaSignOutAlt, FaRoute, FaBars } from 'react-icons/fa';
 
 export default function MenuBar({ hasNotification }) {
   const [userData, setUserData] = useState({
@@ -79,6 +79,7 @@ export default function MenuBar({ hasNotification }) {
     <>
       <header className={styles.menuBar}>
         <div className={styles.rightSection}>
+          <button type="button" className={styles.mobileMenuToggle} onClick={() => window.dispatchEvent(new Event("sanem:toggle-navigation"))} aria-label="Abrir menu" title="Abrir menu"><FaBars /></button>
           <div className={styles.userMenuContainer} ref={dropdownRef}>
             <button
               type="button"

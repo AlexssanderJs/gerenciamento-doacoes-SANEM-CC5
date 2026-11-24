@@ -6,6 +6,7 @@ import com.sanem.model.dto.LoginResponseDTO;
 import com.sanem.model.entity.AppUser;
 import com.sanem.model.entity.Profile;
 import com.sanem.repository.AppUserRepository;
+import com.sanem.repository.PrivacyConsentEventRepository;
 import com.sanem.service.AuthService;
 import com.sanem.model.enums.Status;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +29,9 @@ class AuthServiceTest {
 
     @Mock
     private AppUserRepository appUserRepository;
+
+    @Mock
+    private PrivacyConsentEventRepository privacyConsentEventRepository;
 
     @Mock
     private PasswordEncoder passwordEncoder;

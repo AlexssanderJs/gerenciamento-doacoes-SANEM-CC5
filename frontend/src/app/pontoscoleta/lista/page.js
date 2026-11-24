@@ -6,7 +6,8 @@ import Navigation from "../../components/navegation/navegation";
 import styles from "./lista.module.css";
 import { useRouter } from "next/navigation";
 import apiService from "../../../services/api";
-import { useApiList } from "../../../hooks/useApi";
+import authService from "../../../services/authService";
+import { normalizeRole } from "../../../utils/permissions";
 import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
 import { useNotification } from "../../../components/notifications/NotificationProvider";
 import ConfirmationModal from "../../../components/confirmation/ConfirmationModal";
@@ -29,18 +30,41 @@ export default function ListaPontosColeta() {
   const { showNotification } = useNotification();
 
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, action: null, message: "", title: "" });
+  const [points, setPoints] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [pageInfo, setPageInfo] = useState({ number: 0, totalPages: 0, totalElements: 0 });
+  const [role, setRole] = useState("");
+  const canManage = role === "ADMINISTRATOR" || role === "ATTENDANT";
+  const isAdmin = role === "ADMINISTRATOR";
+
+  useEffect(() => {
+    setRole(normalizeRole(authService.getUser()?.role));
+  }, []);
 
   const [filters, setFilters] = useState({ name: "", type: "", neighborhood: "" });
   const [debouncedFilters, setDebouncedFilters] = useState({ name: "", type: "", neighborhood: "" });
 
-  const {
-    data: pointsRaw,
-    loading,
-    error,
-    loadData,
-  } = useApiList((apiFilters) => apiService.getCollectionPoints(apiFilters));
-
-  const points = Array.isArray(pointsRaw) ? pointsRaw : [];
+  const loadPoints = async (activeFilters = {}, page = 0) => {
+    setLoading(true);
+    setError("");
+    try {
+      const result = await apiService.getCollectionPointsPage(activeFilters, page, 50);
+      const content = result?.content || [];
+      setPoints(content);
+      setPageInfo({
+        number: result?.number ?? page,
+        totalPages: result?.totalPages ?? 0,
+        totalElements: result?.totalElements ?? content.length,
+      });
+    } catch (err) {
+      setError(err.message || "Erro ao carregar pontos de coleta.");
+      setPoints([]);
+      setPageInfo({ number: 0, totalPages: 0, totalElements: 0 });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const handler = setTimeout(() => setDebouncedFilters(filters), 500);
@@ -53,9 +77,7 @@ export default function ListaPontosColeta() {
     if (debouncedFilters.type) activeFilters.type = debouncedFilters.type;
     if (debouncedFilters.neighborhood) activeFilters.neighborhood = debouncedFilters.neighborhood;
 
-    loadData(activeFilters).catch((err) => {
-      console.error("Erro ao carregar pontos de coleta:", err);
-    });
+    loadPoints(activeFilters, 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedFilters]);
 
@@ -79,7 +101,7 @@ export default function ListaPontosColeta() {
       action: async () => {
         try {
           await apiService.deleteCollectionPoint(id);
-          await loadData();
+          await loadPoints(debouncedFilters, pageInfo.number);
           showNotification("Ponto de coleta excluído com sucesso!", "success");
         } catch (err) {
           showNotification(err.message || "Erro ao excluir ponto de coleta", "error");
@@ -115,13 +137,15 @@ export default function ListaPontosColeta() {
         <div className={styles.listContainer}>
           <div className={styles.pageHeader}>
             <h1 className={styles.titulo}>Pontos de Coleta e Sedes</h1>
-            <button
-              className={styles.addButton}
-              onClick={() => router.push("/pontoscoleta")}
-              title="Cadastrar Novo Ponto de Coleta"
-            >
-              <FaPlus />
-            </button>
+            {canManage && (
+              <button
+                className={styles.addButton}
+                onClick={() => router.push("/pontoscoleta")}
+                title="Cadastrar Novo Ponto de Coleta"
+              >
+                <FaPlus />
+              </button>
+            )}
           </div>
           <div className={styles.decoracao}></div>
 
@@ -189,14 +213,35 @@ export default function ListaPontosColeta() {
                       <td>{buildAddress(p) || "-"}</td>
                       <td>{p.operatingHours || "-"}</td>
                       <td className={styles.actionButtons}>
-                        <button className={styles.editButton} onClick={() => handleEdit(p.collectionPointId)} disabled={loading} title="Editar"><FaEdit /></button>
-                        <button className={styles.deleteButton} onClick={() => handleDelete(p.collectionPointId)} disabled={loading} title="Excluir"><FaTrash /></button>
+                        {canManage && <button className={styles.editButton} onClick={() => handleEdit(p.collectionPointId)} disabled={loading} title="Editar"><FaEdit /></button>}
+                        {isAdmin && <button className={styles.deleteButton} onClick={() => handleDelete(p.collectionPointId)} disabled={loading} title="Excluir"><FaTrash /></button>}
                       </td>
                     </tr>
                   ))
                 )}
               </tbody>
             </table>
+          </div>
+          <div className={styles.paginationControls} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, flexWrap: "wrap", padding: "16px 8px" }}>
+            <button
+              type="button"
+              className={styles.cancelButton}
+              disabled={loading || pageInfo.number <= 0}
+              onClick={() => loadPoints(debouncedFilters, pageInfo.number - 1)}
+            >
+              Anterior
+            </button>
+            <span aria-live="polite">
+              Página {pageInfo.totalPages === 0 ? 0 : pageInfo.number + 1} de {pageInfo.totalPages} · {pageInfo.totalElements} pontos
+            </span>
+            <button
+              type="button"
+              className={styles.cancelButton}
+              disabled={loading || pageInfo.number >= pageInfo.totalPages - 1}
+              onClick={() => loadPoints(debouncedFilters, pageInfo.number + 1)}
+            >
+              Próxima
+            </button>
           </div>
         </div>
       </div>

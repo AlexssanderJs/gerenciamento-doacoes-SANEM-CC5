@@ -2,7 +2,7 @@ package com.sanem.controller;
 
 import com.sanem.util.HttpUtils;
 import com.sanem.model.entity.AppUser;
-import com.sanem.service.AppUserService;
+import com.sanem.service.AuthService;
 import com.sanem.model.entity.Beneficiary;
 import com.sanem.service.BeneficiaryService;
 import com.sanem.model.dto.WithdrawalFilterDTO;
@@ -28,7 +28,7 @@ public class WithdrawalController {
 
     private final WithdrawalService withdrawalService;
     private final BeneficiaryService beneficiaryService;
-    private final AppUserService appUserService;
+    private final AuthService authService;
 
     @GetMapping
     public ResponseEntity<Page<WithdrawalDTO>> listPaged(Pageable pageable, WithdrawalFilterDTO withdrawalFilterDTO) {
@@ -59,7 +59,7 @@ public class WithdrawalController {
     @PostMapping
     public ResponseEntity<WithdrawalDTO> create(@RequestBody @Valid WithdrawalFormDTO withdrawalFormDTO, UriComponentsBuilder uriComponentsBuilder) {
         Beneficiary beneficiary = beneficiaryService.getOrThrowException(withdrawalFormDTO.beneficiaryId());
-        AppUser attendantUser = appUserService.getOrThrowException(withdrawalFormDTO.attendantUserId());
+        AppUser attendantUser = authService.getCurrentUser();
 
         Withdrawal withdrawal = withdrawalService.generateWithdrawal(withdrawalFormDTO, beneficiary, attendantUser);
         withdrawalService.save(withdrawal, withdrawalFormDTO);
@@ -72,7 +72,7 @@ public class WithdrawalController {
     @PutMapping("/{id}")
     public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody @Valid WithdrawalFormDTO withdrawalFormDTO) {
         Beneficiary beneficiary = beneficiaryService.getOrThrowException(withdrawalFormDTO.beneficiaryId());
-        AppUser attendantUser = appUserService.getOrThrowException(withdrawalFormDTO.attendantUserId());
+        AppUser attendantUser = authService.getCurrentUser();
 
         Withdrawal withdrawal = withdrawalService.getOrNull(id);
         if(withdrawal == null) return ResponseEntity.notFound().build();

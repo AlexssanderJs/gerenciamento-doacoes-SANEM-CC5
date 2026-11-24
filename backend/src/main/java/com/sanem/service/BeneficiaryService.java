@@ -41,13 +41,40 @@ public class BeneficiaryService {
     private final CardRepository cardRepository;
     private final EntityManager entityManager;
     private final AppUserService appUserService;
+    private final DataSubjectPrivacyService privacyService;
 
     public Beneficiary generateBeneficiary(BeneficiaryFormDTO beneficiaryFormDTO) {
-        return beneficiaryCreateMapper.convert(beneficiaryFormDTO);
+        Beneficiary beneficiary = beneficiaryCreateMapper.convert(beneficiaryFormDTO);
+        privacyService.apply(beneficiary, beneficiaryFormDTO.legalBasis(), beneficiaryFormDTO.privacyPurpose(),
+                beneficiaryFormDTO.privacyConsent());
+        return beneficiary;
     }
 
+    @Transactional
     public void save (Beneficiary beneficiary) {
+        boolean isNew = beneficiary.getBeneficiaryId() == null;
         beneficiaryRepository.save(beneficiary);
+        privacyService.recordEvent(DataSubjectPrivacyService.BENEFICIARY, beneficiary.getBeneficiaryId(),
+                isNew ? "RECORDED" : "UPDATED", beneficiary);
+    }
+
+    @Transactional
+    public void anonymize(Beneficiary beneficiary) {
+        beneficiary.setFullName("Beneficiário anonimizado");
+        beneficiary.setCpf("ANON-" + beneficiary.getBeneficiaryId());
+        beneficiary.setPhone(null);
+        beneficiary.setSocioeconomicData(null);
+        privacyService.markAnonymized(beneficiary);
+        beneficiaryRepository.save(beneficiary);
+        privacyService.recordEvent(DataSubjectPrivacyService.BENEFICIARY, beneficiary.getBeneficiaryId(),
+                "ANONYMIZED", beneficiary);
+    }
+
+    @Transactional(readOnly = true)
+    public com.sanem.model.dto.DataSubjectExportDTO exportData(Beneficiary beneficiary) {
+        return new com.sanem.model.dto.DataSubjectExportDTO(java.time.LocalDateTime.now(),
+                DataSubjectPrivacyService.BENEFICIARY, generateBeneficiaryDTO(beneficiary),
+                privacyService.history(DataSubjectPrivacyService.BENEFICIARY, beneficiary.getBeneficiaryId()));
     }
 
     @Transactional(readOnly = true)
@@ -63,6 +90,8 @@ public class BeneficiaryService {
 
 
     public void updateBeneficiary(Beneficiary beneficiary, BeneficiaryFormDTO beneficiaryFormDTO) {
+        privacyService.apply(beneficiary, beneficiaryFormDTO.legalBasis(), beneficiaryFormDTO.privacyPurpose(),
+                beneficiaryFormDTO.privacyConsent());
         beneficiaryUpdateMapper.update(beneficiary, beneficiaryFormDTO);
     }
 

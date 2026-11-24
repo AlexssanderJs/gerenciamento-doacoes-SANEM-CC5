@@ -13,11 +13,14 @@ import com.sanem.specification.DonationSpecification;
 import com.sanem.model.entity.Donor;
 import com.sanem.model.entity.AppUser;
 import com.sanem.model.entity.Item;
+import com.sanem.model.entity.Category;
 import com.sanem.service.ItemService;
 import com.sanem.model.entity.ItemDonated;
 import com.sanem.repository.ItemDonatedRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification; 
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,13 +36,24 @@ public class DonationService {
     private final DonationCreateMapper donationCreateMapper;
     private final DonationDTOMapper donationDTOMapper;
 
-    private final ItemService itemService; 
+    private final ItemService itemService;
+    private final CategoryService categoryService; 
     private final ItemDonatedRepository itemDonatedRepository;
 
     private final InventoryService inventoryService;
 
     @Transactional
     public DonationDTO create(DonationFormDTO formDTO, Donor donor, AppUser user) {
+        // RF04: o mesmo item pode aparecer mais de uma vez, desde que em estados de conservação diferentes.
+        java.util.Set<String> seenLines = new java.util.HashSet<>();
+        for (DonationFormDTO.DonationItemRequestDTO line : formDTO.items()) {
+            if (line.itemId() != null && !seenLines.add(line.itemId() + ":" + line.conservationState())) {
+                throw new IllegalArgumentException(
+                        "O mesmo item não pode ser repetido com o mesmo estado de conservação na doação. "
+                        + "Some as quantidades em uma única linha.");
+            }
+        }
+
         Donation donation = donationCreateMapper.convert(formDTO, donor, user);
         Donation donationSalva = donationRepository.save(donation);
 
@@ -64,11 +78,19 @@ public class DonationService {
                 donationSalva.getDonationId()
             );
 
+            Category category = categoryService.getOrNull(itemDTO.categoryId());
+            if (category == null || category.getDeletedAt() != null) {
+                throw new EntityNotFoundException("Category", itemDTO.categoryId());
+            }
+
             ItemDonated itemDonated = new ItemDonated();
             itemDonated.setDonation(donationSalva);
             itemDonated.setItem(item);
             itemDonated.setQuantity(itemDTO.quantity());
-            itemDonatedRepository.save(itemDonated);
+            itemDonated.setCategory(category);
+            itemDonated.setConservationState(itemDTO.conservationState());
+            ItemDonated savedItemDonated = itemDonatedRepository.save(itemDonated);
+            donationSalva.getItems().add(savedItemDonated);
         }
 
         return donationDTOMapper.convert(donationSalva);
@@ -137,6 +159,33 @@ public class DonationService {
                 .distinct()
                 .map(donationDTOMapper::convert)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<DonationDTO> findAllFiltered(
+            Pageable pageable,
+            Date startDate,
+            Date endDate,
+            String donorName,
+            String attendantName,
+            String itemName
+    ) {
+        if (startDate != null && endDate != null && startDate.after(endDate)) {
+            throw new IllegalArgumentException("A data inicial não pode ser posterior à data final.");
+        }
+
+        Specification<Donation> spec = Specification.where(DonationSpecification.isNotDeleted())
+                .and(DonationSpecification.betweenDates(startDate, endDate))
+                .and(DonationSpecification.hasDonorName(donorName))
+                .and(DonationSpecification.hasAttendantName(attendantName))
+                .and(DonationSpecification.hasItemName(itemName));
+
+        return donationRepository.findAll(spec, pageable).map(donationDTOMapper::convert);
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> findDistinctAttendantNames() {
+        return donationRepository.findDistinctActiveReceiverNames();
     }
 
     public Donation getOrThrowException(Long id) {

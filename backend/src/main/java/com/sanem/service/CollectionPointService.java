@@ -67,9 +67,9 @@ public class CollectionPointService {
     }
 
     private Specification<CollectionPoint> generateSpecification(CollectionPointFilterDTO collectionPointFilterDTO) {
-        SearchCriteria<String> nameCriteria = SpecificationHelper.generateInnerLikeCriteria("name", collectionPointFilterDTO.name());
-        SearchCriteria<String> cityCriteria = SpecificationHelper.generateInnerLikeCriteria("city", collectionPointFilterDTO.city());
-        SearchCriteria<String> neighborhoodCriteria = SpecificationHelper.generateInnerLikeCriteria("neighborhood", collectionPointFilterDTO.neighborhood());
+        SearchCriteria<String> nameCriteria = SpecificationHelper.generateRightLikeCriteria("name", collectionPointFilterDTO.name());
+        SearchCriteria<String> cityCriteria = SpecificationHelper.generateRightLikeCriteria("city", collectionPointFilterDTO.city());
+        SearchCriteria<String> neighborhoodCriteria = SpecificationHelper.generateRightLikeCriteria("neighborhood", collectionPointFilterDTO.neighborhood());
 
         Specification<CollectionPoint> nameSpecification = new CollectionPointSpecification(nameCriteria);
         Specification<CollectionPoint> citySpecification = new CollectionPointSpecification(cityCriteria);

@@ -14,12 +14,17 @@ import authService from "../../../services/authService"
 import { FaPlus, FaTrash, FaMinus } from "react-icons/fa"
 import NewItemModal from "../../../components/items/NewItemModal"
 
+let rowCounter = 0
+const nextRowId = () => `row-${Date.now()}-${++rowCounter}`
+const CONSERVATION_STATES = ["NEW", "GOOD", "FAIR", "POOR"]
+
 export default function RegistrarDoacaoPage() {
     const router = useRouter()
     const { showNotification } = useNotification()
 
     const [donors, setDonors] = useState([])
     const [items, setItems] = useState([])
+    const [categories, setCategories] = useState([])
 
     const [selectedDonor, setSelectedDonor] = useState(null)
     const [selectedItems, setSelectedItems] = useState([])
@@ -33,10 +38,26 @@ export default function RegistrarDoacaoPage() {
     const [submitting, setSubmitting] = useState(false)
 
     useEffect(() => {
-        loadDonors()
         loadItems()
+        loadCategories()
         loadPriorityDemands()
     }, [])
+
+    const loadCategories = async () => {
+        try {
+            const data = await apiService.getCategories()
+            setCategories((data || []).filter((category) => !category.deletedAt))
+        } catch (err) {
+            console.error("Erro ao carregar categorias:", err)
+            showNotification("Erro ao carregar categorias", "error")
+        }
+    }
+
+    const getDefaultCategoryId = (item) => {
+        const fallback = categories.find((category) => category.name?.toLowerCase() === "outros")
+            || categories[0]
+        return item?.categoriaId || fallback?.categoryId || ""
+    }
 
     const loadPriorityDemands = async () => {
         try {
@@ -52,16 +73,29 @@ export default function RegistrarDoacaoPage() {
         }
     }
 
-    const loadDonors = async () => {
-        try {
-            const data = await apiService.getDonors()
-            const mapped = (data || []).map(mapDonorFromBackend)
-            setDonors(mapped)
-        } catch (err) {
-            console.error("Erro ao carregar doadores:", err)
-            showNotification("Erro ao carregar doadores", "error")
+    // RNF05: busca de doadores no servidor, com debounce, em vez de carregar todos de uma vez
+    useEffect(() => {
+        const term = searchDonor.trim()
+        if (!term || selectedDonor) {
+            setDonors([])
+            return
         }
-    }
+        let active = true
+        const timer = setTimeout(async () => {
+            try {
+                const data = await apiService.searchDonors(term)
+                if (active) setDonors((data || []).map(mapDonorFromBackend))
+            } catch (err) {
+                console.error("Erro ao buscar doadores:", err)
+                if (active) showNotification("Erro ao buscar doadores", "error")
+            }
+        }, 300)
+        return () => {
+            active = false
+            clearTimeout(timer)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchDonor, selectedDonor])
 
     const loadItems = async () => {
         try {
@@ -74,11 +108,7 @@ export default function RegistrarDoacaoPage() {
         }
     }
 
-    const filteredDonors = donors.filter(
-        (d) =>
-            d.nomeCompleto?.toLowerCase().includes(searchDonor.toLowerCase()) ||
-            d.cpf?.includes(searchDonor)
-    )
+    const filteredDonors = donors
 
     const filteredItems = items.filter(
         (item) =>
@@ -101,7 +131,15 @@ export default function RegistrarDoacaoPage() {
         } else {
             setSelectedItems([
                 ...selectedItems,
-                { isNew: false, itemId: item.id, quantity: 1, item }
+                {
+                    rowId: nextRowId(),
+                    isNew: false,
+                    itemId: item.id,
+                    quantity: 1,
+                    item,
+                    categoryId: String(getDefaultCategoryId(item)),
+                    conservationState: "GOOD"
+                }
             ])
         }
     }
@@ -113,33 +151,49 @@ export default function RegistrarDoacaoPage() {
         })
         setSelectedItems((currentItems) => [
             ...currentItems,
-            { isNew: false, itemId: createdItem.id, quantity: 1, item: createdItem }
+            {
+                isNew: false,
+                itemId: createdItem.id,
+                quantity: 1,
+                item: createdItem,
+                categoryId: String(getDefaultCategoryId(createdItem)),
+                conservationState: "GOOD"
+            }
         ])
         await loadItems()
     }
 
-    const handleUpdateQuantity = (identifier, isNew, delta) => {
-        setSelectedItems(
-            selectedItems.map((si) => {
-                const match = isNew
-                    ? si.isNew && si.tempId === identifier
-                    : !si.isNew && si.itemId === identifier
-                if (match) {
-                    const newQuantity = Math.max(1, si.quantity + delta)
-                    return { ...si, quantity: newQuantity }
-                }
-                return si
-            })
+    const handleUpdateQuantity = (rowId, delta) => {
+        setSelectedItems((current) =>
+            current.map((si) =>
+                si.rowId === rowId
+                    ? { ...si, quantity: Math.max(1, si.quantity + delta) }
+                    : si
+            )
         )
     }
 
-    const handleRemoveItem = (identifier, isNew) => {
-        setSelectedItems(
-            selectedItems.filter((si) => {
-                if (isNew) return si.tempId !== identifier
-                return si.itemId !== identifier
-            })
-        )
+    const handleRemoveItem = (rowId) => {
+        setSelectedItems((current) => current.filter((si) => si.rowId !== rowId))
+    }
+
+    // RF04: o mesmo item pode ser registrado em outro estado de conservação na mesma doação
+    const handleDuplicateRow = (rowId) => {
+        setSelectedItems((current) => {
+            const index = current.findIndex((si) => si.rowId === rowId)
+            if (index < 0) return current
+            const source = current[index]
+            const usedStates = current
+                .filter((si) => si.itemId === source.itemId)
+                .map((si) => si.conservationState)
+            const freeState = CONSERVATION_STATES.find((state) => !usedStates.includes(state))
+            if (!freeState) {
+                showNotification("Este item já está em todos os estados de conservação.", "error")
+                return current
+            }
+            const copy = { ...source, rowId: nextRowId(), quantity: 1, conservationState: freeState }
+            return [...current.slice(0, index + 1), copy, ...current.slice(index + 1)]
+        })
     }
 
     const handleSubmit = async (e) => {
@@ -164,19 +218,37 @@ export default function RegistrarDoacaoPage() {
             return
         }
 
+        const seenLines = new Set()
+        for (const si of selectedItems) {
+            const key = `${si.itemId}:${si.conservationState || "GOOD"}`
+            if (seenLines.has(key)) {
+                showNotification(
+                    "O mesmo item não pode se repetir com o mesmo estado de conservação. Altere o estado ou some as quantidades.",
+                    "error"
+                )
+                return
+            }
+            seenLines.add(key)
+        }
+
+        if (selectedItems.some((si) => !si.categoryId)) {
+            showNotification("Selecione a categoria de todos os itens", "error")
+            return
+        }
+
         try {
             setSubmitting(true)
 
             const donationData = {
                 donationDate: new Date().toISOString(),
                 donorId: selectedDonor.id,
-                receiverUserId: user.id,
-                items: selectedItems.map((si) => {
-                    if (si.isNew) {
-                        return { description: si.nome, quantity: si.quantity }
-                    }
-                    return { itemId: si.itemId, quantity: si.quantity }
-                })
+                items: selectedItems.map((si) => ({
+                    itemId: si.itemId || null,
+                    newItemName: si.isNew ? si.nome : null,
+                    quantity: si.quantity,
+                    categoryId: Number(si.categoryId),
+                    conservationState: si.conservationState || "GOOD"
+                }))
             }
 
             await apiService.createDonation(donationData)
@@ -374,9 +446,7 @@ export default function RegistrarDoacaoPage() {
                                     <h3>Itens Adicionados</h3>
                                     {selectedItems.map((si) => (
                                         <div
-                                            key={
-                                                si.isNew ? si.tempId : si.itemId
-                                            }
+                                            key={si.rowId}
                                             className={styles.selectedItem}
                                         >
                                             <div className={styles.itemInfo}>
@@ -398,19 +468,48 @@ export default function RegistrarDoacaoPage() {
                                                 )}
                                             </div>
 
+                                            <div className={styles.itemMetadataControls}>
+                                                <label>
+                                                    Categoria
+                                                    <select
+                                                        value={si.categoryId || ""}
+                                                        onChange={(e) => setSelectedItems((current) => current.map((entry) =>
+                                                            entry.rowId === si.rowId ? { ...entry, categoryId: e.target.value } : entry
+                                                        ))}
+                                                        required
+                                                    >
+                                                        <option value="">Selecione</option>
+                                                        {categories.map((category) => (
+                                                            <option key={category.categoryId} value={category.categoryId}>
+                                                                {category.name}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </label>
+                                                <label>
+                                                    Conservação
+                                                    <select
+                                                        value={si.conservationState || "GOOD"}
+                                                        onChange={(e) => setSelectedItems((current) => current.map((entry) =>
+                                                            entry.rowId === si.rowId ? { ...entry, conservationState: e.target.value } : entry
+                                                        ))}
+                                                        required
+                                                    >
+                                                        <option value="NEW">Novo</option>
+                                                        <option value="GOOD">Bom</option>
+                                                        <option value="FAIR">Regular</option>
+                                                        <option value="POOR">Ruim</option>
+                                                    </select>
+                                                </label>
+                                            </div>
+
                                             <div
                                                 className={styles.itemControls}
                                             >
                                                 <button
                                                     type="button"
                                                     onClick={() =>
-                                                        handleUpdateQuantity(
-                                                            si.isNew
-                                                                ? si.tempId
-                                                                : si.itemId,
-                                                            si.isNew,
-                                                            -1
-                                                        )
+                                                        handleUpdateQuantity(si.rowId, -1)
                                                     }
                                                     disabled={si.quantity <= 1}
                                                     className={
@@ -427,13 +526,7 @@ export default function RegistrarDoacaoPage() {
                                                 <button
                                                     type="button"
                                                     onClick={() =>
-                                                        handleUpdateQuantity(
-                                                            si.isNew
-                                                                ? si.tempId
-                                                                : si.itemId,
-                                                            si.isNew,
-                                                            1
-                                                        )
+                                                        handleUpdateQuantity(si.rowId, 1)
                                                     }
                                                     className={
                                                         styles.quantityButton
@@ -443,13 +536,17 @@ export default function RegistrarDoacaoPage() {
                                                 </button>
                                                 <button
                                                     type="button"
+                                                    onClick={() => handleDuplicateRow(si.rowId)}
+                                                    className={styles.quantityButton}
+                                                    title="Adicionar o mesmo item em outro estado de conservação"
+                                                    aria-label="Adicionar o mesmo item em outro estado de conservação"
+                                                >
+                                                    <FaPlus /><small>estado</small>
+                                                </button>
+                                                <button
+                                                    type="button"
                                                     onClick={() =>
-                                                        handleRemoveItem(
-                                                            si.isNew
-                                                                ? si.tempId
-                                                                : si.itemId,
-                                                            si.isNew
-                                                        )
+                                                        handleRemoveItem(si.rowId)
                                                     }
                                                     className={
                                                         styles.removeButton

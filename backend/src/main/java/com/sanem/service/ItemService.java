@@ -153,7 +153,7 @@ public class ItemService {
                 return criteriaBuilder.conjunction();
             }
 
-            String pattern = "%" + itemFilterDTO.searchTerm().toLowerCase() + "%";
+            String pattern = itemFilterDTO.searchTerm().trim().toLowerCase() + "%";
             
             return criteriaBuilder.or(
                 criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), pattern),
@@ -177,7 +177,7 @@ public class ItemService {
                 return criteriaBuilder.equal(root.get("category").get("categoryId"), itemFilterDTO.categoryId());
             }
             if (hasValue(itemFilterDTO.category())) {
-                String catPattern = "%" + itemFilterDTO.category().trim().toLowerCase() + "%";
+                String catPattern = itemFilterDTO.category().trim().toLowerCase() + "%";
                 return criteriaBuilder.like(criteriaBuilder.lower(root.get("category").get("name")), catPattern);
             }
             return criteriaBuilder.conjunction();

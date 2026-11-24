@@ -19,4 +19,7 @@ public interface DonationRepository extends JpaRepository<Donation, Long>, JpaSp
     
     @Query("SELECT d FROM Donation d WHERE d.donationId = :id AND d.deletedAt IS NULL")
     Optional<Donation> findById(@Param("id") Long id);
+
+    @Query("SELECT DISTINCT d.receiverUser.name FROM Donation d WHERE d.deletedAt IS NULL ORDER BY d.receiverUser.name")
+    List<String> findDistinctActiveReceiverNames();
 }
