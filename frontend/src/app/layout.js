@@ -4,6 +4,7 @@ import "./globals.css";
 import "./tour-theme.css";
 import NotificationWrapper from "../components/notifications/NotificationWrapper";
 import { OnboardingProvider } from "../components/onboarding/OnboardingProvider";
+import RouteAccessGuard from "../components/RouteAccessGuard";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,7 +28,7 @@ export default function RootLayout({ children }) {
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <NotificationWrapper>
           <OnboardingProvider>
-            {children}
+            <RouteAccessGuard>{children}</RouteAccessGuard>
           </OnboardingProvider>
         </NotificationWrapper>
       </body>

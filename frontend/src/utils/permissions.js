@@ -26,3 +26,29 @@ export function canAccessMenu(roleValue, key) {
   }
   return false;
 }
+
+export function canAccessPath(roleValue, pathname = "") {
+  const role = normalizeRole(roleValue);
+  if (!role) return false;
+  if (role === "ADMINISTRATOR") return true;
+  if (pathname === "/politica-privacidade" || pathname.startsWith("/perfil")) return true;
+
+  if (role === "ATTENDANT") {
+    return !pathname.startsWith("/usuarios") && !pathname.startsWith("/configuracoes");
+  }
+
+  if (role === "EVALUATOR") {
+    const allowedPrefixes = [
+      "/home",
+      "/cadastrobeneficiario",
+      "/pontoscoleta",
+      "/demandas",
+      "/relatorios",
+      "/ajuda",
+      "/perfil",
+    ];
+    return allowedPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(prefix + "/"));
+  }
+
+  return false;
+}

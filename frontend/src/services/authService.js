@@ -122,7 +122,7 @@ class AuthService {
     );
   }
 
-  updatePrivacyConsent(accepted, version = 'SANEM-PRIVACY-1.0') {
+  updatePrivacyConsent(accepted, version = 'SANEM-PRIVACY-1.1') {
     const token = this.getToken();
     const user = this.getUser();
     if (!token || !user) return;
