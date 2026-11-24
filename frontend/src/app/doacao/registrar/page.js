@@ -31,6 +31,8 @@ export default function RegistrarDoacaoPage() {
 
     const [searchDonor, setSearchDonor] = useState("")
     const [searchItem, setSearchItem] = useState("")
+    const [showDonorDropdown, setShowDonorDropdown] = useState(false)
+    const [showItemDropdown, setShowItemDropdown] = useState(false)
 
     const [showNewItemModal, setShowNewItemModal] = useState(false)
     // RF20: itemId -> demanda prioritária ativa (para destacar na busca)
@@ -280,14 +282,24 @@ export default function RegistrarDoacaoPage() {
                                     type="text"
                                     placeholder="Buscar doador por nome ou CPF..."
                                     value={searchDonor}
-                                    onChange={(e) =>
+                                    onChange={(e) => {
                                         setSearchDonor(e.target.value)
-                                    }
+                                        setShowDonorDropdown(
+                                            e.target.value.trim() !== ""
+                                        )
+                                        setShowItemDropdown(false)
+                                    }}
+                                    onFocus={() => {
+                                        if (searchDonor.trim()) {
+                                            setShowDonorDropdown(true)
+                                        }
+                                        setShowItemDropdown(false)
+                                    }}
                                     className={styles.searchInput}
                                 />
                             </div>
 
-                            {searchDonor && !selectedDonor && (
+                            {showDonorDropdown && searchDonor && (
                                 <div className={styles.dropdown}>
                                     {filteredDonors.length === 0 ? (
                                         <div className={styles.dropdownItem}>
@@ -300,7 +312,10 @@ export default function RegistrarDoacaoPage() {
                                                 className={styles.dropdownItem}
                                                 onClick={() => {
                                                     setSelectedDonor(donor)
-                                                    setSearchDonor("")
+                                                    setSearchDonor(
+                                                        donor.nomeCompleto
+                                                    )
+                                                    setShowDonorDropdown(false)
                                                 }}
                                             >
                                                 <div>
@@ -346,9 +361,11 @@ export default function RegistrarDoacaoPage() {
                                         </div>
                                         <button
                                             type="button"
-                                            onClick={() =>
+                                            onClick={() => {
                                                 setSelectedDonor(null)
-                                            }
+                                                setSearchDonor("")
+                                                setShowDonorDropdown(false)
+                                            }}
                                             className={styles.removeButton}
                                             title="Remover Doador"
                                         >
@@ -368,12 +385,22 @@ export default function RegistrarDoacaoPage() {
                                         type="text"
                                         placeholder="Buscar item existente no estoque..."
                                         value={searchItem}
-                                        onChange={(e) =>
+                                        onChange={(e) => {
                                             setSearchItem(e.target.value)
-                                        }
+                                            setShowItemDropdown(
+                                                e.target.value.trim() !== ""
+                                            )
+                                            setShowDonorDropdown(false)
+                                        }}
+                                        onFocus={() => {
+                                            if (searchItem.trim()) {
+                                                setShowItemDropdown(true)
+                                            }
+                                            setShowDonorDropdown(false)
+                                        }}
                                         className={styles.searchInput}
                                     />
-                                    {searchItem && (
+                                    {showItemDropdown && searchItem && (
                                         <div className={styles.dropdown}>
                                             {filteredItems.length === 0 ? (
                                                 <div
@@ -395,6 +422,7 @@ export default function RegistrarDoacaoPage() {
                                                                 item
                                                             )
                                                             setSearchItem("")
+                                                            setShowItemDropdown(false)
                                                         }}
                                                     >
                                                         <div>
