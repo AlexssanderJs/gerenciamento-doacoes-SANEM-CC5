@@ -33,22 +33,31 @@ export function canAccessPath(roleValue, pathname = "") {
   if (role === "ADMINISTRATOR") return true;
   if (pathname === "/politica-privacidade" || pathname.startsWith("/perfil")) return true;
 
-  if (role === "ATTENDANT") {
-    return !pathname.startsWith("/usuarios") && !pathname.startsWith("/configuracoes") && !pathname.startsWith("/solicitacoes-privacidade");
-  }
+  const allowedPrefixes = role === "ATTENDANT"
+    ? [
+        "/home",
+        "/estoque",
+        "/doacao",
+        "/retirada",
+        "/cadastrodoador",
+        "/cadastrobeneficiario",
+        "/pontoscoleta",
+        "/demandas",
+        "/relatorios",
+        "/ajuda",
+      ]
+    : role === "EVALUATOR"
+      ? [
+          "/home",
+          "/cadastrobeneficiario/lista",
+          "/pontoscoleta/lista",
+          "/demandas",
+          "/relatorios",
+          "/ajuda",
+        ]
+      : [];
 
-  if (role === "EVALUATOR") {
-    const allowedPrefixes = [
-      "/home",
-      "/cadastrobeneficiario",
-      "/pontoscoleta",
-      "/demandas",
-      "/relatorios",
-      "/ajuda",
-      "/perfil",
-    ];
-    return allowedPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(prefix + "/"));
-  }
-
-  return false;
+  return allowedPrefixes.some((prefix) =>
+    pathname === prefix || pathname.startsWith(prefix + "/")
+  );
 }
