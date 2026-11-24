@@ -1,8 +1,7 @@
 .container {
   min-height: 100vh;
   background: #f5f6fa;
-  margin-left: var(--sidebar-width, 220px);
-  transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1); /* largura do Navigation */
+  margin-left: 220px; /* largura do Navigation */
 }
 
 .main {
@@ -24,15 +23,6 @@
 .description {
   font-size: 1.2rem;
   color: #444;
-}
-
-.donationImage {
-  margin-bottom: 24px;
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-  max-width: 100%;
-  height: auto;
-  width: auto;
 }
 
 .effectPhrase {
@@ -70,14 +60,25 @@
   font-size: 1.2rem;
 }
 
+/* Dashboards lado a lado (empilham em telas menores) */
+.dashboards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  width: min(1100px, calc(100% - 32px));
+  margin: 28px 0 32px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .dashboards {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 480px) {
   .main {
     padding-top: 56px;
-  }
-  .donationImage {
-    width: 100%;
-    height: auto;
-    max-width: 280px;
   }
   .title {
     font-size: 1.5rem;
