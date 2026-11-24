@@ -9,6 +9,7 @@ import { mapBeneficiaryFromBackend, mapBeneficiaryToBackend } from "../../../ser
 import { useApiList } from "../../../hooks/useApi";
 import { FaPlus, FaCheck, FaTimes, FaEdit, FaTrash, FaChevronDown, FaBan, FaUndo, FaFilter } from "react-icons/fa";
 import authService from "../../../services/authService";
+import { normalizeRole } from "../../../utils/permissions";
 import { useNotification } from "../../../components/notifications/NotificationProvider";
 import ConfirmationModal from "../../../components/confirmation/ConfirmationModal";
 import { validateCPF, validatePhone } from "../../../utils/validators";
@@ -19,6 +20,7 @@ export default function ListaBeneficiarios() {
   const { showNotification } = useNotification();
   const [approvingId, setApprovingId] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isEvaluator, setIsEvaluator] = useState(false);
   
   // Estados para modais e formulários
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, action: null, message: "", title: "" });
@@ -61,31 +63,16 @@ export default function ListaBeneficiarios() {
     ? beneficiariosRaw.map(mapBeneficiaryFromBackend)
     : [];
 
-  // Verifica permissões de Admin
+  // O perfil vem do login validado pelo backend; não consultamos /user/{id}
+  // aqui para evitar que perfis sem acesso administrativo precisem listar contas.
   useEffect(() => {
-    const checkAdmin = async () => {
-      try {
-        const user = authService.getUser();
-        const roleName = (user?.role || '').toLowerCase();
-        const isAdminByRole = roleName.includes('admin') || roleName.includes('administrator');
-        if (isAdminByRole) {
-          setIsAdmin(true); return;
-        }
-        if (user?.id) {
-          try {
-            const userData = await apiService.getUser(user.id);
-            const profileName = (userData?.profile?.name || '').toLowerCase();
-            const isAdminByProfile = userData?.profile?.profileId === 1 || profileName.includes('admin') || profileName.includes('administrator');
-            setIsAdmin(isAdminByProfile);
-            return;
-          } catch (err) { console.error("Erro ao buscar dados:", err); }
-        }
-        const isAdminById = user?.perfilId === 1;
-        setIsAdmin(isAdminByRole || isAdminById);
-      } catch (err) { console.error("Erro ao verificar permissões:", err); }
-    };
-    checkAdmin();
+    const role = normalizeRole(authService.getUser()?.role);
+    setIsAdmin(role === "ADMINISTRATOR");
+    setIsEvaluator(role === "EVALUATOR");
   }, []);
+
+  const canReviewBeneficiaries = isAdmin || isEvaluator;
+  const canManageBeneficiaries = isAdmin || (!isEvaluator);
 
   // Fechar dropdowns ao clicar fora
   useEffect(() => {
@@ -407,13 +394,15 @@ export default function ListaBeneficiarios() {
           
           <div className={styles.pageHeader}>
             <h1 className={styles.titulo}>Beneficiários Cadastrados</h1>
-            <button
-              className={styles.addButton} data-tour="benef-novo"
-              onClick={handleAdd}
-              title="Adicionar Novo Beneficiário"
-            >
-              <FaPlus />
-            </button>
+            {canManageBeneficiaries && (
+              <button
+                className={styles.addButton} data-tour="benef-novo"
+                onClick={handleAdd}
+                title="Adicionar Novo Beneficiário"
+              >
+                <FaPlus />
+              </button>
+            )}
           </div>
           <div className={styles.decoracao}></div>
 
@@ -555,20 +544,20 @@ export default function ListaBeneficiarios() {
                       <td>{b.remainingWithdrawals !== undefined && b.remainingWithdrawals !== null ? `${b.remainingWithdrawals}/${b.withdrawalLimit || 0}` : '-'}</td>
                       <td><span className={getStatusClass(b.status)}>{getStatusLabel(b.status)}</span></td>
                       <td className={styles.actionButtons}>
-                        <button className={styles.editButton} onClick={() => handleEdit(b.id)} disabled={loading} title="Editar"><FaEdit /></button>
-                        {isAdmin && b.status === "PENDING" && (
+                        {canManageBeneficiaries && <button className={styles.editButton} onClick={() => handleEdit(b.id)} disabled={loading} title="Editar"><FaEdit /></button>}
+                        {canReviewBeneficiaries && b.status === "PENDING" && (
                           <>
                             <button className={styles.approveButton} onClick={() => handleApprove(b.id)} disabled={loading || approvingId === b.id} title="Aprovar"><FaCheck /></button>
                             <button className={styles.rejectButton} onClick={() => handleReject(b.id)} disabled={loading || approvingId === b.id} title="Rejeitar"><FaTimes /></button>
                           </>
                         )}
-                        {isAdmin && b.status === "APPROVED" && (
+                        {canReviewBeneficiaries && b.status === "APPROVED" && (
                           <button className={styles.rejectButton} onClick={() => handleInactivate(b.id)} disabled={loading || approvingId === b.id} title="Inativar"><FaBan /></button>
                         )}
-                        {isAdmin && b.status === "INACTIVE" && (
+                        {canReviewBeneficiaries && b.status === "INACTIVE" && (
                           <button className={styles.approveButton} onClick={() => handleReactivate(b.id)} disabled={loading || approvingId === b.id} title="Reativar"><FaUndo /></button>
                         )}
-                        <button className={styles.deleteButton} onClick={() => handleDelete(b.id)} disabled={loading} title="Excluir"><FaTrash /></button>
+                        {isAdmin && <button className={styles.deleteButton} onClick={() => handleDelete(b.id)} disabled={loading} title="Excluir"><FaTrash /></button>}
                       </td>
                     </tr>
                   ))
