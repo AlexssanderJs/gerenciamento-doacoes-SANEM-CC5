@@ -57,3 +57,7 @@ CREATE INDEX IF NOT EXISTS idx_collection_point_active_type
 
 CREATE INDEX IF NOT EXISTS idx_item_donated_item_id
     ON item_donated (item_id);
+
+CREATE INDEX IF NOT EXISTS idx_category_active_name_prefix
+    ON category (lower(name) text_pattern_ops)
+    WHERE deleted_at IS NULL;

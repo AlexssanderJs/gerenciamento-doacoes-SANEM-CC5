@@ -18,9 +18,9 @@ export const options = {
     },
   },
   thresholds: {
-    catalog_duration: ["p(95)<2000"],
-    collection_points_duration: ["p(95)<2000"],
-    donations_duration: ["p(95)<2000"],
+    catalog_duration: ["p(95)<2000", "max<2000"],
+    collection_points_duration: ["p(95)<2000", "max<2000"],
+    donations_duration: ["p(95)<2000", "max<2000"],
     http_req_failed: ["rate<0.01"],
   },
 };

@@ -291,7 +291,7 @@ Não utilize os usuários e senhas de demonstração em produção. Configure cr
 
 #### 👨‍💼 Administração e Relatórios
 
-- ✅ Sistema de permissões (Atendente/Administrador)
+- ✅ Sistema de permissões (Administrador/Atendente/Avaliador)
 - ✅ Gestão de usuários e perfis
 - ✅ Relatórios de doações, distribuições e posição de estoque (CSV/PDF)
 

@@ -22,7 +22,7 @@ No Bash:
 ## Critérios
 
 - 10 usuários virtuais simultâneos por 1 minuto, configuráveis por ambiente.
-- p95 inferior a 2.000 ms em cada uma das três consultas.
+- p95 inferior a 2.000 ms e máximo observado inferior a 2.000 ms em cada uma das três consultas.
 - Taxa de requisições com falha inferior a 1%.
 - Todas as respostas precisam ser HTTP 200.
 

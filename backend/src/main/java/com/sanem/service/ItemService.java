@@ -177,7 +177,7 @@ public class ItemService {
                 return criteriaBuilder.equal(root.get("category").get("categoryId"), itemFilterDTO.categoryId());
             }
             if (hasValue(itemFilterDTO.category())) {
-                String catPattern = "%" + itemFilterDTO.category().trim().toLowerCase() + "%";
+                String catPattern = itemFilterDTO.category().trim().toLowerCase() + "%";
                 return criteriaBuilder.like(criteriaBuilder.lower(root.get("category").get("name")), catPattern);
             }
             return criteriaBuilder.conjunction();
