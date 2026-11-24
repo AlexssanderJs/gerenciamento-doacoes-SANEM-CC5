@@ -106,3 +106,23 @@
         width: 100%;
     }
 }
+
+@media (max-width: 600px) {
+  .modalActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .cancelButton,
+  .submitButton {
+    flex: 1 1 120px;
+    min-width: 0;
+    max-width: 100%;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
