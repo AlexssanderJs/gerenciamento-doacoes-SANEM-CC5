@@ -18,11 +18,11 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
+        format_sql: false
         hbm2ddl:
           auto: none
         cache:
@@ -50,6 +50,8 @@ spring:
             enable: ${MAIL_SMTP_STARTTLS:false}
 
 app:
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}
   security:
     jwt:
       secret: ${JWT_SECRET:}
@@ -64,10 +66,12 @@ app:
 logging:
   level:
     com.sanem: DEBUG
-    org.springframework.security: DEBUG
+    org.springframework.security: INFO
 
 
 sanem:
+  privacy:
+    policy-version: ${PRIVACY_POLICY_VERSION:SANEM-PRIVACY-1.1}
   notifications:
     # RF19 – perfis que recebem alerta quando um item atinge o estoque mínimo
     # (comparação sem diferenciar maiúsculas/minúsculas com profile.name)

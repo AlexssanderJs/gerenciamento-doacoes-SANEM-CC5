@@ -43,6 +43,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/user/me", "/user/me/**").authenticated()
+                .requestMatchers("/privacy-request/me", "/privacy-request/me/**").authenticated()
+                .requestMatchers("/privacy-request/**").hasRole("ADMINISTRATOR")
                 .requestMatchers("/user/**", "/profile/**").hasRole("ADMINISTRATOR")
 
                 .requestMatchers(HttpMethod.PATCH, "/beneficiary/*/approve", "/beneficiary/*/reject",
