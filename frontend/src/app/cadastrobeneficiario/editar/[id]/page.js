@@ -11,6 +11,7 @@ import { useNotification } from "../../../../components/notifications/Notificati
 import { FaIdCard, FaPrint, FaPlus, FaHistory } from "react-icons/fa";
 import { validateCPF, validateEmail, validatePhone } from "../../../../utils/validators";
 import { maskCPF, maskPhone, unmask } from "../../../../utils/masks";
+import PrivacyConsentFields, { DEFAULT_PRIVACY, validatePrivacy } from "../../../../components/privacy/PrivacyConsentFields";
 
 const EditarBeneficiario = () => {
   const router = useRouter();
@@ -33,7 +34,8 @@ const EditarBeneficiario = () => {
     cpfCrnm: "",
     nif: "",
     status: "PENDING",
-    withdrawalLimit: ""
+    withdrawalLimit: "",
+    ...DEFAULT_PRIVACY
   });
 
   useEffect(() => {
@@ -58,7 +60,10 @@ const EditarBeneficiario = () => {
           nif: mappedBeneficiary.nif || "",
           status: mappedBeneficiary.status || "PENDING",
           withdrawalLimit: mappedBeneficiary.withdrawalLimit || "",
-          currentWithdrawalsThisMonth: mappedBeneficiary.currentWithdrawalsThisMonth || 0
+          currentWithdrawalsThisMonth: mappedBeneficiary.currentWithdrawalsThisMonth || 0,
+          legalBasis: mappedBeneficiary.legalBasis,
+          privacyPurpose: mappedBeneficiary.privacyPurpose,
+          privacyConsent: mappedBeneficiary.privacyConsent
         });
       } catch (err) {
         console.error("Erro ao carregar beneficiário:", err);
@@ -201,6 +206,12 @@ const EditarBeneficiario = () => {
       return;
     }
 
+    const privacyError = validatePrivacy(form);
+    if (privacyError) {
+      showNotification(privacyError, "error");
+      return;
+    }
+
     // Verifica se há erros de validação
     if (!emailValid || !phoneValid || !cpfValid) {
       showNotification("Por favor, corrija os erros nos campos antes de enviar.", "error");
@@ -218,7 +229,10 @@ const EditarBeneficiario = () => {
         phone: phoneCleaned,
         socioeconomicData: 'MODIFICAR PARA APARECER NO FRONT',
         beneficiaryStatus: form.status || 'PENDING',
-        withdrawalLimit: form.withdrawalLimit ? parseInt(form.withdrawalLimit) : null
+        withdrawalLimit: form.withdrawalLimit ? parseInt(form.withdrawalLimit) : null,
+        legalBasis: form.legalBasis,
+        privacyPurpose: form.privacyPurpose || null,
+        privacyConsent: Boolean(form.privacyConsent)
       };
 
       // Chama a API de atualização
@@ -411,6 +425,12 @@ const EditarBeneficiario = () => {
                 )}
               </small>
             </div>
+
+            <PrivacyConsentFields
+              subject="beneficiário"
+              value={{ legalBasis: form.legalBasis, privacyPurpose: form.privacyPurpose, privacyConsent: form.privacyConsent }}
+              onChange={(privacy) => setForm((current) => ({ ...current, ...privacy }))}
+            />
             
             <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
               <button 

@@ -155,7 +155,12 @@ public class ReportService {
                             b.approverId(),
                             b.withdrawalLimit(),
                             used,
-                            rem
+                            rem,
+                            b.legalBasis(),
+                            b.privacyPurpose(),
+                            b.privacyConsent(),
+                            b.privacyConsentAt(),
+                            b.anonymizedAt()
                     );
                 })
                 .toList();

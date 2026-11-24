@@ -2,6 +2,7 @@ package com.sanem.model.entity;
 
 import com.sanem.model.entity.SoftDeletable;
 import com.sanem.model.enums.BeneficiaryStatus;
+import com.sanem.model.enums.LegalBasis;
 import com.sanem.model.entity.AppUser;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -18,7 +19,7 @@ import java.time.LocalDateTime;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Beneficiary implements SoftDeletable {
+public class Beneficiary implements SoftDeletable, PersonalDataSubject {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,6 +51,26 @@ public class Beneficiary implements SoftDeletable {
 
     @Column(name = "withdrawal_limit")
     private Integer withdrawalLimit;
+
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "legal_basis", length = 30)
+    private LegalBasis legalBasis;
+
+    @Column(name = "privacy_purpose")
+    private String privacyPurpose;
+
+    @Column(name = "privacy_consent", nullable = false)
+    private boolean privacyConsent;
+
+    @Column(name = "privacy_consent_at")
+    private LocalDateTime privacyConsentAt;
+
+    @Column(name = "privacy_consent_version", length = 50)
+    private String privacyConsentVersion;
+
+    @Column(name = "anonymized_at")
+    private LocalDateTime anonymizedAt;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;

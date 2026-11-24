@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import styles from "./cadastrobeneficiario.module.css";
 import apiService from "../../services/api";
 import { mapBeneficiaryToBackend } from "../../services/dataMapper";
+import PrivacyConsentFields, { DEFAULT_PRIVACY, validatePrivacy } from "../components/privacy/PrivacyConsentFields";
 import { useApi } from "../../hooks/useApi";
 import { useNotification } from "../../components/notifications/NotificationProvider";
 import { validateCPF, validateEmail, validatePhone } from "../../utils/validators";
@@ -18,7 +19,8 @@ const CadastroBeneficiario = () => {
     email: "",
     cpfCrnm: "",
     nif: "",
-    withdrawalLimit: ""
+    withdrawalLimit: "",
+    ...DEFAULT_PRIVACY
   });
   const [fieldErrors, setFieldErrors] = useState({});
   const router = useRouter();
@@ -109,6 +111,12 @@ const CadastroBeneficiario = () => {
       return;
     }
 
+    const privacyError = validatePrivacy(form);
+    if (privacyError) {
+      showNotification(privacyError, "error");
+      return;
+    }
+
     // Verifica se há erros de validação
     if (!emailValid || !phoneValid || !cpfValid) {
       showNotification("Por favor, corrija os erros nos campos antes de enviar.", "error");
@@ -136,7 +144,8 @@ const CadastroBeneficiario = () => {
         email: "",
         cpfCrnm: "",
         nif: "",
-        withdrawalLimit: ""
+        withdrawalLimit: "",
+        ...DEFAULT_PRIVACY
       });
       
       showNotification("Beneficiário cadastrado com sucesso!", "success");
@@ -261,6 +270,12 @@ const CadastroBeneficiario = () => {
                 Deixe em branco para usar o limite global do sistema
               </small>
             </div>
+
+            <PrivacyConsentFields
+              subject="beneficiário"
+              value={{ legalBasis: form.legalBasis, privacyPurpose: form.privacyPurpose, privacyConsent: form.privacyConsent }}
+              onChange={(privacy) => setForm((current) => ({ ...current, ...privacy }))}
+            />
 
             <button type="submit" disabled={loading}>
               {loading ? "Cadastrando..." : "Cadastrar Beneficiário"}

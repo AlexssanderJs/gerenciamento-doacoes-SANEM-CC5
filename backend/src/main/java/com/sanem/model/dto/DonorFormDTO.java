@@ -1,7 +1,9 @@
 package com.sanem.model.dto;
 
 import com.sanem.validation.ValidCpfCnpj;
+import com.sanem.model.enums.LegalBasis;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -17,8 +19,14 @@ public record DonorFormDTO(
         String contact,
 
         @Email(message = "E-mail deve ter um formato válido")
-        String email
+        String email,
 
+        @NotNull(message = "A base legal do tratamento de dados é obrigatória")
+        LegalBasis legalBasis,
 
+        @Size(max = 255, message = "A finalidade deve ter no máximo 255 caracteres")
+        String privacyPurpose,
+
+        Boolean privacyConsent
 ) {
 }

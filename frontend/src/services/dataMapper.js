@@ -4,7 +4,10 @@ export const mapDonorToBackend = (frontendDonor) => {
         name: frontendDonor.nomeCompleto,
         cpfCnpj: frontendDonor.cpf,
         contact: frontendDonor.telefoneCelular, // Usando telefone como contato obrigatório do back-end
-        email: frontendDonor.email || null
+        email: frontendDonor.email || null,
+        legalBasis: frontendDonor.legalBasis || null,
+        privacyPurpose: frontendDonor.privacyPurpose || null,
+        privacyConsent: Boolean(frontendDonor.privacyConsent)
     }
 }
 
@@ -15,6 +18,9 @@ export const mapDonorFromBackend = (backendDonor) => {
         cpf: backendDonor.cpfCnpj,
         telefoneCelular: backendDonor.contact,
         email: backendDonor.email, // Assumindo que contact pode ser email
+        legalBasis: backendDonor.legalBasis || "CONSENT",
+        privacyPurpose: backendDonor.privacyPurpose || "",
+        privacyConsent: Boolean(backendDonor.privacyConsent)
     }
 }
 
@@ -118,7 +124,10 @@ export const mapBeneficiaryToBackend = (frontendBeneficiary) => {
         beneficiaryStatus: "PENDING", // Status padrão
         withdrawalLimit: frontendBeneficiary.withdrawalLimit
             ? parseInt(frontendBeneficiary.withdrawalLimit)
-            : null
+            : null,
+        legalBasis: frontendBeneficiary.legalBasis || null,
+        privacyPurpose: frontendBeneficiary.privacyPurpose || null,
+        privacyConsent: Boolean(frontendBeneficiary.privacyConsent)
     }
 }
 
@@ -133,7 +142,10 @@ export const mapBeneficiaryFromBackend = (backendBeneficiary) => {
         currentWithdrawalsThisMonth:
             backendBeneficiary.currentWithdrawalsThisMonth || 0,
         remainingWithdrawals: backendBeneficiary.remainingWithdrawals || 0,
-        status: backendBeneficiary.beneficiaryStatus
+        status: backendBeneficiary.beneficiaryStatus,
+        legalBasis: backendBeneficiary.legalBasis || "CONSENT",
+        privacyPurpose: backendBeneficiary.privacyPurpose || "",
+        privacyConsent: Boolean(backendBeneficiary.privacyConsent)
     }
 }
 

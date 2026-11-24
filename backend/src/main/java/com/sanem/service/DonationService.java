@@ -44,6 +44,16 @@ public class DonationService {
 
     @Transactional
     public DonationDTO create(DonationFormDTO formDTO, Donor donor, AppUser user) {
+        // RF04: o mesmo item pode aparecer mais de uma vez, desde que em estados de conservação diferentes.
+        java.util.Set<String> seenLines = new java.util.HashSet<>();
+        for (DonationFormDTO.DonationItemRequestDTO line : formDTO.items()) {
+            if (line.itemId() != null && !seenLines.add(line.itemId() + ":" + line.conservationState())) {
+                throw new IllegalArgumentException(
+                        "O mesmo item não pode ser repetido com o mesmo estado de conservação na doação. "
+                        + "Some as quantidades em uma única linha.");
+            }
+        }
+
         Donation donation = donationCreateMapper.convert(formDTO, donor, user);
         Donation donationSalva = donationRepository.save(donation);
 

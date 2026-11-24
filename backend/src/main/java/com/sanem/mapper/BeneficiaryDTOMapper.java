@@ -35,7 +35,12 @@ public class BeneficiaryDTOMapper {
                 appUserDTOMapper.convert(beneficiary.getApproverId()),
                 totalLimit,
                 currentWithdrawals,
-                remainingWithdrawals
+                remainingWithdrawals,
+                beneficiary.getLegalBasis(),
+                beneficiary.getPrivacyPurpose(),
+                beneficiary.isPrivacyConsent(),
+                beneficiary.getPrivacyConsentAt(),
+                beneficiary.getAnonymizedAt()
         );
     }
 }

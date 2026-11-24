@@ -81,6 +81,24 @@ public class BeneficiaryController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/{id}/privacy-export")
+    public ResponseEntity<com.sanem.model.dto.DataSubjectExportDTO> exportData(@PathVariable Long id) {
+        Beneficiary beneficiary = beneficiaryService.getOrNull(id);
+        if(beneficiary == null) return ResponseEntity.notFound().build();
+
+        return ResponseEntity.ok(beneficiaryService.exportData(beneficiary));
+    }
+
+    @PostMapping("/{id}/anonymize")
+    public ResponseEntity<Void> anonymize(@PathVariable Long id) {
+        Beneficiary beneficiary = beneficiaryService.getOrNull(id);
+        if(beneficiary == null) return ResponseEntity.notFound().build();
+
+        beneficiaryService.anonymize(beneficiary);
+
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         Beneficiary beneficiary = beneficiaryService.getOrNull(id);

@@ -3,6 +3,7 @@ package com.sanem.service;
 import com.sanem.exception.EntityNotFoundException;
 import com.sanem.specification.SearchCriteria;
 import com.sanem.specification.SpecificationHelper;
+import com.sanem.model.dto.DataSubjectExportDTO;
 import com.sanem.model.dto.DonorFilterDTO;
 import com.sanem.model.dto.DonorFormDTO;
 import com.sanem.model.dto.DonorDTO;
@@ -28,13 +29,38 @@ public class DonorService {
     private final DonorCreateMapper donorCreateMapper;
     private final DonorDTOMapper donorDTOMapper;
     private final DonorUpdateMapper donorUpdateMapper;
+    private final DataSubjectPrivacyService privacyService;
 
     public Donor generateDonor(DonorFormDTO donorFormDTO) {
-        return donorCreateMapper.convert(donorFormDTO);
+        Donor donor = donorCreateMapper.convert(donorFormDTO);
+        privacyService.apply(donor, donorFormDTO.legalBasis(), donorFormDTO.privacyPurpose(),
+                donorFormDTO.privacyConsent());
+        return donor;
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public void save (Donor donor) {
+        boolean isNew = donor.getDonorId() == null;
         donorRepository.save(donor);
+        privacyService.recordEvent(DataSubjectPrivacyService.DONOR, donor.getDonorId(),
+                isNew ? "RECORDED" : "UPDATED", donor);
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public void anonymize(Donor donor) {
+        donor.setName("Doador anonimizado");
+        donor.setCpfCnpj(null);
+        donor.setContact(null);
+        donor.setEmail(null);
+        privacyService.markAnonymized(donor);
+        donorRepository.save(donor);
+        privacyService.recordEvent(DataSubjectPrivacyService.DONOR, donor.getDonorId(), "ANONYMIZED", donor);
+    }
+
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public DataSubjectExportDTO exportData(Donor donor) {
+        return new DataSubjectExportDTO(java.time.LocalDateTime.now(), DataSubjectPrivacyService.DONOR,
+                generateDonorDTO(donor), privacyService.history(DataSubjectPrivacyService.DONOR, donor.getDonorId()));
     }
 
     public DonorDTO generateDonorDTO(Donor donor) {
@@ -46,6 +72,8 @@ public class DonorService {
     }
 
     public void updateDonor(Donor donor, DonorFormDTO donorFormDTO) {
+        privacyService.apply(donor, donorFormDTO.legalBasis(), donorFormDTO.privacyPurpose(),
+                donorFormDTO.privacyConsent());
         donorUpdateMapper.update(donor, donorFormDTO);
     }
 

@@ -10,6 +10,7 @@ import { useApi } from "../../../../hooks/useApi";
 import { useNotification } from "../../../../components/notifications/NotificationProvider";
 import { validateCPForCNPJ, validateEmail, validatePhone } from "../../../../utils/validators";
 import { maskCPForCNPJ, maskPhone, unmask } from "../../../../utils/masks";
+import PrivacyConsentFields, { DEFAULT_PRIVACY, validatePrivacy } from "../../../../components/privacy/PrivacyConsentFields";
 
 const EditarDoador = () => {
   const router = useRouter();
@@ -25,7 +26,8 @@ const EditarDoador = () => {
     nomeCompleto: "",
     telefoneCelular: "",
     email: "",
-    cpf: ""
+    cpf: "",
+    ...DEFAULT_PRIVACY
   });
 
   useEffect(() => {
@@ -46,7 +48,10 @@ const EditarDoador = () => {
           nomeCompleto: mappedDonor.nomeCompleto || "",
           telefoneCelular: telefoneMascarado,
           email: mappedDonor.email || "",
-          cpf: cpfMascarado
+          cpf: cpfMascarado,
+          legalBasis: mappedDonor.legalBasis,
+          privacyPurpose: mappedDonor.privacyPurpose,
+          privacyConsent: mappedDonor.privacyConsent
         });
       } catch (err) {
         console.error("Erro ao carregar doador:", err);
@@ -130,6 +135,12 @@ const EditarDoador = () => {
     // Verifica se há erros de validação
     if (!emailValid || !phoneValid || !cpfValid) {
       showNotification("Por favor, corrija os erros nos campos antes de enviar.", "error");
+      return;
+    }
+
+    const privacyError = validatePrivacy(form);
+    if (privacyError) {
+      showNotification(privacyError, "error");
       return;
     }
 
@@ -235,6 +246,11 @@ const EditarDoador = () => {
               />
               {fieldErrors.cpf && <span className={styles.fieldError}>{fieldErrors.cpf}</span>}
             </div>
+            <PrivacyConsentFields
+              subject="doador"
+              value={{ legalBasis: form.legalBasis, privacyPurpose: form.privacyPurpose, privacyConsent: form.privacyConsent }}
+              onChange={(privacy) => setForm((current) => ({ ...current, ...privacy }))}
+            />
             <hr className={styles.separador} />
             
             

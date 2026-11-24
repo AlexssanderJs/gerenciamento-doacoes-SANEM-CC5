@@ -47,6 +47,11 @@ public class SecurityConfig {
                 .requestMatchers("/privacy-request", "/privacy-request/**").hasRole("ADMINISTRATOR")
                 .requestMatchers("/user/**", "/profile/**").hasRole("ADMINISTRATOR")
 
+                .requestMatchers(HttpMethod.GET, "/donor/*/privacy-export", "/beneficiary/*/privacy-export")
+                    .hasRole("ADMINISTRATOR")
+                .requestMatchers(HttpMethod.POST, "/donor/*/anonymize", "/beneficiary/*/anonymize")
+                    .hasRole("ADMINISTRATOR")
+
                 .requestMatchers(HttpMethod.PATCH, "/beneficiary/*/approve", "/beneficiary/*/reject",
                     "/beneficiary/*/inactivate", "/beneficiary/*/reactivate")
                     .hasAnyRole("ADMINISTRATOR", "EVALUATOR")
