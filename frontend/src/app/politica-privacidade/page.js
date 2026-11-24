@@ -28,6 +28,7 @@ export default function PrivacyPolicyPage() {
     const router = useRouter();
     const [checked, setChecked] = useState(false);
     const [accepted, setAccepted] = useState(false);
+    const [policyVersion, setPolicyVersion] = useState(POLICY_VERSION);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [exporting, setExporting] = useState(false);
@@ -62,6 +63,7 @@ export default function PrivacyPolicyPage() {
             if (!active) return;
             const user = authService.getUser();
             setAccepted(Boolean(user?.privacyConsent));
+            setPolicyVersion(user?.currentPrivacyPolicyVersion || POLICY_VERSION);
             setLoading(false);
             loadRequests();
         };
@@ -222,7 +224,7 @@ export default function PrivacyPolicyPage() {
                     <p>
                         Quando o consentimento for solicitado como base legal, o SANEM registra a versão aceita,
                         data/hora, e eventos de aceite ou revogação. A versão atual desta política é
-                        {" "}<strong>{POLICY_VERSION}</strong>. Alterações relevantes exigem nova ciência/aceite
+                        {" "}<strong>{policyVersion}</strong>. Alterações relevantes exigem nova ciência/aceite
                         no sistema. A revogação é registrada e encerra o acesso às funcionalidades protegidas
                         até que a situação seja tratada pela organização responsável.
                     </p>
@@ -234,7 +236,7 @@ export default function PrivacyPolicyPage() {
                         beneficiários e para titulares que não tenham conta de acesso, a organização deverá
                         disponibilizar o canal oficial indicado na seção 1.
                     </p>
-                    <p className={styles.version}>Versão da política: {POLICY_VERSION}</p>
+                    <p className={styles.version}>Versão da política: {policyVersion}</p>
                 </div>
 
                 {error && <p className={styles.error} role="alert">{error}</p>}
