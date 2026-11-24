@@ -216,37 +216,34 @@ gerenciamento-doacoes-SANEM/
 
 ## 🔧 Configuração do Banco de Dados
 
-O SANEM utiliza PostgreSQL. Em desenvolvimento, o Docker Compose sobe um PostgreSQL 16 local automaticamente. Também é possível executar o backend diretamente e apontá-lo para um banco PostgreSQL externo, como NeonDB.
+O SANEM utiliza **PostgreSQL hospedado no NeonDB** (nuvem) — não há banco local. O backend conecta no Neon pela connection string definida no `.env`; o Docker Compose sobe apenas backend, frontend e mailpit (e-mail de desenvolvimento).
 
-### Desenvolvimento com Docker Compose (recomendado)
+### Configuração
 
-1. Copie .env.example para .env.
-2. Gere e configure um JWT_SECRET aleatório com pelo menos 32 bytes.
+1. Copie `.env.example` para `.env`.
+2. Preencha a connection string do seu projeto Neon e um `JWT_SECRET` aleatório (≥ 32 bytes, ex.: `openssl rand -base64 48`):
+
+    SPRING_DATASOURCE_URL=jdbc:postgresql://<host>.neon.tech/<database>?sslmode=require
+    SPRING_DATASOURCE_USERNAME=<usuario-neon>
+    SPRING_DATASOURCE_PASSWORD=<senha-neon>
+    JWT_SECRET=<segredo-aleatorio-com-32-bytes-ou-mais>
+
 3. Inicie os serviços na raiz do repositório:
 
     docker compose up -d --build
 
-O Compose inicia postgres, backend, frontend e mailpit. O backend aguarda o healthcheck do PostgreSQL e se conecta a postgres:5432/sanem dentro da rede Docker. As migrations Flyway criam o esquema e o profile dev insere dados de demonstração.
+O backend conecta no Neon, as migrations Flyway criam o esquema e, com `SPRING_PROFILES_ACTIVE=dev`, o seed insere dados de demonstração.
 
-Variáveis relevantes no .env:
+Variáveis relevantes no `.env`:
 
-- POSTGRES_PASSWORD: senha do PostgreSQL local.
-- POSTGRES_PORT: porta publicada no host (padrão 5432).
+- SPRING_DATASOURCE_URL / SPRING_DATASOURCE_USERNAME / SPRING_DATASOURCE_PASSWORD: conexão com o PostgreSQL do NeonDB.
+- SPRING_PROFILES_ACTIVE: `dev` (schema + seed) ou `prod` (apenas schema).
 - JWT_SECRET: segredo JWT aleatório com pelo menos 32 bytes.
 - PRIVACY_POLICY_VERSION: versão vigente da política (padrão SANEM-PRIVACY-1.1).
 - APP_CORS_ALLOWED_ORIGINS: origens frontend permitidas em desenvolvimento.
+- MAIL_HOST / MAIL_PORT: servidor de e-mail de desenvolvimento (mailpit; UI em http://localhost:8025).
 
-### Backend executado diretamente ou PostgreSQL externo
-
-Para executar o backend diretamente, configure SPRING_DATASOURCE_URL, SPRING_DATASOURCE_USERNAME e SPRING_DATASOURCE_PASSWORD no ambiente do processo. Exemplo com NeonDB:
-
-    SPRING_DATASOURCE_URL=jdbc:postgresql://<host-neon>/<database>?sslmode=require
-    SPRING_DATASOURCE_USERNAME=<usuario>
-    SPRING_DATASOURCE_PASSWORD=<senha>
-    JWT_SECRET=<segredo-aleatorio-com-32-bytes-ou-mais>
-    PRIVACY_POLICY_VERSION=SANEM-PRIVACY-1.1
-
-Depois execute mvn spring-boot:run na pasta backend. Para Neon, mantenha sslmode=require.
+Para rodar o backend fora do Docker, exporte as mesmas variáveis `SPRING_DATASOURCE_*` no ambiente e execute `mvn spring-boot:run` na pasta `backend` (mantenha `sslmode=require` para o Neon).
 
 ### Seeds e ambientes
 
