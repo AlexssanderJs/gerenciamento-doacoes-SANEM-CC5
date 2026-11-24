@@ -109,7 +109,7 @@ export default function Navigation() {
             className={`${styles.menuItem} ${isActive(entry.path) ? styles.active : ""}`}
         >
             <span className={styles.menuIcon}>{entry.icon}</span>
-            {!isCondensed && <span className={styles.menuLabel}>{entry.label}</span>}
+            {(!isCondensed || mobileOpen) && <span className={styles.menuLabel}>{entry.label}</span>}
         </Link>
     )
 

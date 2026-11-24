@@ -137,8 +137,9 @@ class ApiService {
 
     // Métodos para Doações
     async getDonations(filters = {}) {
-        const page = await this.getDonationsPage(filters, 0, 50)
-        return page?.content || []
+        const queryParams = new URLSearchParams(filters).toString()
+        const endpoint = `/donation/${queryParams ? `?${queryParams}` : ""}`
+        return this.request(endpoint)
     }
 
     async getDonationAttendants() {

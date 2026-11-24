@@ -21,6 +21,7 @@ export default function ListaBeneficiarios() {
   const [approvingId, setApprovingId] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isEvaluator, setIsEvaluator] = useState(false);
+  const [roleLoaded, setRoleLoaded] = useState(false);
   
   // Estados para modais e formulários
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, action: null, message: "", title: "" });
@@ -69,10 +70,11 @@ export default function ListaBeneficiarios() {
     const role = normalizeRole(authService.getUser()?.role);
     setIsAdmin(role === "ADMINISTRATOR");
     setIsEvaluator(role === "EVALUATOR");
+    setRoleLoaded(true);
   }, []);
 
-  const canReviewBeneficiaries = isAdmin || isEvaluator;
-  const canManageBeneficiaries = isAdmin || (!isEvaluator);
+  const canReviewBeneficiaries = roleLoaded && (isAdmin || isEvaluator);
+  const canManageBeneficiaries = roleLoaded && !isEvaluator;
 
   // Fechar dropdowns ao clicar fora
   useEffect(() => {
