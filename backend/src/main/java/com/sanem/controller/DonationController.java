@@ -63,6 +63,11 @@ public class DonationController {
                 pageable, startDate, endDate, donorName, attendantName, itemName));
     }
 
+    @GetMapping("/attendants")
+    public ResponseEntity<List<String>> findAttendantNames() {
+        return ResponseEntity.ok(donationService.findDistinctAttendantNames());
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         donationService.delete(id);

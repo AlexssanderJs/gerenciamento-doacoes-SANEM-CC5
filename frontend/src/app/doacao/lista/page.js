@@ -91,16 +91,16 @@ export default function ListaDoacoesPage() {
     useEffect(() => {
         const fetchFilterOptions = async () => {
             try {
-                const [dData, uData, iData, cData] = await Promise.all([
+                const [dData, attendants, iData, cData] = await Promise.all([
                     apiService.getDonors(),
-                    apiService.getUsers(),
+                    apiService.getDonationAttendants(),
                     apiService.getItems(),
                     apiService.getCategories()
                 ])
                 setCategories((cData || []).filter((category) => !category.deletedAt))
                 setFilterOptions({
                     donors: (dData || []).map(d => d.name || d.nomeCompleto).filter(Boolean),
-                    attendants: (uData || []).map(u => u.name || u.nomeCompleto).filter(Boolean),
+                    attendants: (attendants || []).filter(Boolean),
                     items: (iData || []).map(i => i.description || i.nome).filter(Boolean)
                 })
             } catch (err) {

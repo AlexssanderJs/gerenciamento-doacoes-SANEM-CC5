@@ -172,6 +172,11 @@ public class DonationService {
         return donationRepository.findAll(spec, pageable).map(donationDTOMapper::convert);
     }
 
+    @Transactional(readOnly = true)
+    public List<String> findDistinctAttendantNames() {
+        return donationRepository.findDistinctActiveReceiverNames();
+    }
+
     public Donation getOrThrowException(Long id) {
         return donationRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException("Donation", id)

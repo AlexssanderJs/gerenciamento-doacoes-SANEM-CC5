@@ -141,6 +141,10 @@ class ApiService {
         return page?.content || []
     }
 
+    async getDonationAttendants() {
+        return this.request("/donation/attendants")
+    }
+
     async getDonationsPage(filters = {}, page = 0, size = 50) {
         const clean = Object.fromEntries(
             Object.entries(filters).filter(([, value]) => value !== "" && value !== null && value !== undefined)
