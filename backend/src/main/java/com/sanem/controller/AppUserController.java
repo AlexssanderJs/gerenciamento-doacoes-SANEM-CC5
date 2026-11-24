@@ -3,6 +3,7 @@ package com.sanem.controller;
 import com.sanem.model.dto.AppUserDTO;
 import com.sanem.model.dto.AppUserFormDTO;
 import com.sanem.model.dto.AppUserUpdateDTO;
+import com.sanem.model.dto.PrivacyDataExportDTO;
 import com.sanem.model.dto.ChangePasswordRequestDTO;
 import com.sanem.model.entity.AppUser;
 import com.sanem.service.AppUserService;
@@ -54,6 +55,11 @@ public class AppUserController {
     public ResponseEntity<Map<String, Boolean>> revokePrivacyConsent(HttpServletRequest request) {
         authService.revokePrivacyConsent(request.getRemoteAddr(), request.getHeader("User-Agent"));
         return ResponseEntity.ok(Map.of("accepted", false));
+    }
+
+    @GetMapping("/me/privacy-data")
+    public ResponseEntity<PrivacyDataExportDTO> exportMyPrivacyData() {
+        return ResponseEntity.ok(authService.getMyPrivacyData());
     }
 
     @GetMapping

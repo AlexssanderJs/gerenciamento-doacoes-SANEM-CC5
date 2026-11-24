@@ -2,6 +2,8 @@ package com.sanem.service;
 
 import com.sanem.model.dto.LoginRequestDTO;
 import com.sanem.model.dto.LoginResponseDTO;
+import com.sanem.model.dto.PrivacyConsentEventDTO;
+import com.sanem.model.dto.PrivacyDataExportDTO;
 import com.sanem.model.dto.SessionValidationDTO;
 import com.sanem.model.entity.AppUser;
 import com.sanem.model.entity.PrivacyConsentEvent;
@@ -66,6 +68,25 @@ public class AuthService {
         return appUserRepository.findByLoginAndDeletedAtIsNull(authentication.getName())
                 .filter(user -> user.getStatus() == Status.ACTIVE)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado ou inativo"));
+    }
+
+    @Transactional(readOnly = true)
+    public PrivacyDataExportDTO getMyPrivacyData() {
+        AppUser user = getCurrentUser();
+        var history = privacyConsentEventRepository.findByUserUserIdOrderByOccurredAtDesc(user.getUserId())
+                .stream()
+                .map(event -> new PrivacyConsentEventDTO(
+                        event.getEventType(), event.getPolicyVersion(), event.getOccurredAt(),
+                        event.getIpAddress(), event.getUserAgent()))
+                .toList();
+
+        return new PrivacyDataExportDTO(
+                LocalDateTime.now(), user.getUserId(), user.getName(), user.getLogin(), user.getEmail(),
+                user.getProfile() == null ? null : user.getProfile().getName(),
+                user.getStatus() == null ? null : user.getStatus().name(),
+                hasCurrentPrivacyConsent(user), user.getPrivacyConsentVersion(),
+                user.getPrivacyConsentAt(), user.getPrivacyConsentRevokedAt(), history
+        );
     }
 
     @Transactional
