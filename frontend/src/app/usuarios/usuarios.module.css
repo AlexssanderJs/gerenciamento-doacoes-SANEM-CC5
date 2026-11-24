@@ -507,3 +507,33 @@
   background: none !important;
   outline: none;
 }
+
+@media (max-width: 600px) {
+  .actionButtons {
+    min-width: 0;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .editButton,
+  .deleteButton {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    padding: 8px 10px;
+    font-size: 0.85rem;
+  }
+
+  .modalActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .modalActions > button {
+    flex: 1 1 120px;
+    min-width: 0;
+    max-width: 100%;
+  }
+}

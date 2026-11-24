@@ -182,3 +182,12 @@
     padding: 14px 20px;
   }
 }
+@media (max-width: 768px) {
+  .formulario button {
+    width: min(100%, 360px);
+    max-width: 100%;
+    justify-self: center;
+    padding: 10px 16px;
+    font-size: 0.95rem;
+  }
+}
