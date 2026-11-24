@@ -12,6 +12,8 @@
   --color-border-light: #e5e7eb;
   --color-error: #c0392b;
   --color-success: #43a047;
+  --sidebar-width: 220px;
+  --sidebar-offset: 250px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -128,3 +130,31 @@ h1, h2, h3 {
 }
 
 
+
+@media (max-width: 768px) {
+  :root {
+    --sidebar-width: 0px;
+    --sidebar-offset: 0px;
+  }
+}
+
+
+/* Mobile: limites globais para impedir que controles ultrapassem seus containers. */
+button {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 768px) {
+  button {
+    font-size: 0.95rem;
+    line-height: 1.25;
+    letter-spacing: 0;
+  }
+
+  button:not([class]) {
+    padding: 10px 12px;
+  }
+}

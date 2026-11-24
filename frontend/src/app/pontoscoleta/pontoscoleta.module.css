@@ -2,8 +2,9 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  margin-left: 250px;
-  width: calc(100% - 250px);
+  margin-left: var(--sidebar-offset, 250px);
+  width: calc(100% - var(--sidebar-offset, 250px));
+  transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   box-sizing: border-box;
 }
 
@@ -206,5 +207,24 @@
   }
   .formulario {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .formulario,
+  .formContainer {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .submitButton,
+  .cancelButton {
+    width: min(100%, 360px);
+    max-width: 100%;
+    min-width: 0;
+    justify-self: center;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    overflow-wrap: anywhere;
   }
 }

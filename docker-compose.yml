@@ -1,32 +1,50 @@
 services:
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: sanem-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - sanem-network
+
   backend:
     build: ./backend
-    container_name: javalovers-backend
-    restart: always
+    container_name: sanem-backend
+    restart: unless-stopped
     ports:
       - "8080:8080"
-    # Banco: PostgreSQL hospedado no NeonDB.
-    # As variáveis (SPRING_DATASOURCE_URL/USERNAME/PASSWORD e SPRING_PROFILES_ACTIVE)
-    # vêm do .env (não versionado) e são passadas LITERALMENTE ao container.
-    # Ver .env.example.
+    # O banco é PostgreSQL na nuvem (NeonDB). As credenciais vêm do .env:
+    # SPRING_DATASOURCE_URL / SPRING_DATASOURCE_USERNAME / SPRING_DATASOURCE_PASSWORD.
     env_file:
-      - .env
+      - path: .env
+        required: false
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      JWT_SECRET: ${JWT_SECRET:?Configure JWT_SECRET no arquivo .env}
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
+      APP_FRONTEND_URL: ${APP_FRONTEND_URL:-http://localhost:3000}
+    depends_on:
+      mailpit:
+        condition: service_started
     networks:
-      - javalovers-network
+      - sanem-network
 
   frontend:
     build: ./frontend
-    container_name: javalovers-frontend
-    restart: always
+    container_name: sanem-frontend
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_API_URL: http://backend:8080/api
+      NEXT_PUBLIC_API_URL: http://localhost:8080/api
     depends_on:
       - backend
     networks:
-      - javalovers-network
+      - sanem-network
 
 networks:
-  javalovers-network:
+  sanem-network:
     driver: bridge

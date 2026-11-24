@@ -13,9 +13,13 @@ import {
     mapDonationFromBackend
 } from "../../../services/dataMapper"
 import authService from "../../../services/authService"
+import NewItemModal from "../../../components/items/NewItemModal"
+import { normalizeRole } from "../../../utils/permissions"
 
 export default function ListaDoacoesPage() {
     const { showNotification } = useNotification()
+    useEffect(() => { setIsAdmin(normalizeRole(authService.getUser()?.role) === "ADMINISTRATOR") }, [])
+    const [isAdmin, setIsAdmin] = useState(false)
 
     const [donations, setDonations] = useState([])
     const [loading, setLoading] = useState(true)
@@ -30,6 +34,8 @@ export default function ListaDoacoesPage() {
     const [showAddModal, setShowAddModal] = useState(false)
     const [donors, setDonors] = useState([])
     const [items, setItems] = useState([])
+    const [categories, setCategories] = useState([])
+    const [pageInfo, setPageInfo] = useState({ number: 0, totalPages: 0, totalElements: 0, size: 50 })
     const [selectedDonor, setSelectedDonor] = useState(null)
     const [selectedItems, setSelectedItems] = useState([])
     const [searchDonor, setSearchDonor] = useState("")
@@ -37,6 +43,7 @@ export default function ListaDoacoesPage() {
     const [showDonorDropdown, setShowDonorDropdown] = useState(false)
     const [showItemDropdown, setShowItemDropdown] = useState(false)
     const [newItemName, setNewItemName] = useState("")
+    const [showNewItemModal, setShowNewItemModal] = useState(false)
     const [submitting, setSubmitting] = useState(false)
 
     // ==========================================
@@ -90,14 +97,16 @@ export default function ListaDoacoesPage() {
     useEffect(() => {
         const fetchFilterOptions = async () => {
             try {
-                const [dData, uData, iData] = await Promise.all([
+                const [dData, attendants, iData, cData] = await Promise.all([
                     apiService.getDonors(),
-                    apiService.getUsers(),
-                    apiService.getItems()
+                    apiService.getDonationAttendants(),
+                    apiService.getItems(),
+                    apiService.getCategories()
                 ])
+                setCategories((cData || []).filter((category) => !category.deletedAt))
                 setFilterOptions({
                     donors: (dData || []).map(d => d.name || d.nomeCompleto).filter(Boolean),
-                    attendants: (uData || []).map(u => u.name || u.nomeCompleto).filter(Boolean),
+                    attendants: (attendants || []).filter(Boolean),
                     items: (iData || []).map(i => i.description || i.nome).filter(Boolean)
                 })
             } catch (err) {
@@ -141,11 +150,12 @@ export default function ListaDoacoesPage() {
         setInputValues({ donorName: "", attendantName: "", itemName: "" })
     }
 
-    const loadDonations = async (activeFilters = {}) => {
+    const loadDonations = async (activeFilters = {}, page = 0) => {
         if (activeFilters.startDate && activeFilters.endDate) {
             if (new Date(activeFilters.startDate) > new Date(activeFilters.endDate)) {
                 showNotification("A data inicial não pode ser maior que a data final.", "warning")
                 setDonations([])
+                setPageInfo({ number: 0, totalPages: 0, totalElements: 0, size: 50 })
                 return
             }
         }
@@ -156,21 +166,20 @@ export default function ListaDoacoesPage() {
                 Object.entries(activeFilters).filter(([_, v]) => v !== "")
             )
 
-            const data = await apiService.getDonations(cleanFilters)
-            const donationsArray = Array.isArray(data) ? data : []
-            const mappedDonations = donationsArray.map(mapDonationFromBackend)
-
-            const sortedDonations = mappedDonations.sort((a, b) => {
-                const dateA = a.donationDate ? new Date(a.donationDate).getTime() : 0
-                const dateB = b.donationDate ? new Date(b.donationDate).getTime() : 0
-                return dateB - dateA
+            const data = await apiService.getDonationsPage(cleanFilters, page, 50)
+            const mappedDonations = (data?.content || []).map(mapDonationFromBackend)
+            setDonations(mappedDonations)
+            setPageInfo({
+                number: data?.number ?? page,
+                totalPages: data?.totalPages ?? 0,
+                totalElements: data?.totalElements ?? mappedDonations.length,
+                size: data?.size ?? 50
             })
-
-            setDonations(sortedDonations)
         } catch (err) {
             console.error("Erro ao carregar doações:", err)
             showNotification(err.message || "Erro ao carregar doações", "error")
             setDonations([])
+            setPageInfo({ number: 0, totalPages: 0, totalElements: 0, size: 50 })
         } finally {
             setLoading(false)
         }
@@ -247,6 +256,12 @@ export default function ListaDoacoesPage() {
             item.descricao?.toLowerCase().includes(searchItem.toLowerCase())
     )
 
+    const getDefaultCategoryId = (item) => {
+        const fallback = categories.find((category) => category.name?.toLowerCase() === "outros")
+            || categories[0]
+        return item?.categoriaId || item?.category?.categoryId || fallback?.categoryId || ""
+    }
+
     const handleAddExistingItem = (item) => {
         const existing = selectedItems.find((si) => !si.isNew && si.itemId === item.id)
         if (existing) {
@@ -260,19 +275,23 @@ export default function ListaDoacoesPage() {
         } else {
             setSelectedItems([
                 ...selectedItems,
-                { isNew: false, itemId: item.id, quantity: 1, item }
+                { isNew: false, itemId: item.id, quantity: 1, item,
+                    categoryId: String(getDefaultCategoryId(item)), conservationState: "GOOD" }
             ])
         }
     }
 
-    const handleAddNewItem = () => {
-        if (!newItemName.trim()) return
-        const tempId = `new_${Date.now()}`
-        setSelectedItems([
-            ...selectedItems,
-            { isNew: true, tempId, nome: newItemName.trim(), quantity: 1 }
+    const handleNewItemCreated = async (createdItem) => {
+        setItems((currentItems) => {
+            const alreadyListed = currentItems.some((item) => item.id === createdItem.id)
+            return alreadyListed ? currentItems : [createdItem, ...currentItems]
+        })
+        setSelectedItems((currentItems) => [
+            ...currentItems,
+            { isNew: false, itemId: createdItem.id, quantity: 1, item: createdItem,
+                categoryId: String(getDefaultCategoryId(createdItem)), conservationState: "GOOD" }
         ])
-        setNewItemName("")
+        await loadItems()
     }
 
     const handleUpdateQuantity = (identifier, isNew, delta) => {
@@ -310,6 +329,11 @@ export default function ListaDoacoesPage() {
             return
         }
 
+        if (selectedItems.some((item) => !item.categoryId)) {
+            showNotification("Selecione a categoria de todos os itens", "error")
+            return
+        }
+
         const user = authService.getUser()
         if (!user || !user.id) {
             showNotification("Usuário não autenticado. Por favor, faça login novamente.", "error")
@@ -322,10 +346,13 @@ export default function ListaDoacoesPage() {
                 donationDate: new Date().toISOString(),
                 donorId: selectedDonor.id,
                 attendantUserId: user.id,
-                items: selectedItems.map((si) => {
-                    if (si.isNew) return { newItemName: si.nome, quantity: si.quantity }
-                    return { itemId: si.itemId, quantity: si.quantity }
-                })
+                items: selectedItems.map((si) => ({
+                    itemId: si.itemId || null,
+                    newItemName: si.isNew ? si.nome : null,
+                    quantity: si.quantity,
+                    categoryId: Number(si.categoryId),
+                    conservationState: si.conservationState || "GOOD"
+                }))
             }
 
             await apiService.createDonation(donationData)
@@ -574,13 +601,15 @@ export default function ListaDoacoesPage() {
                                             </td>
                                             <td>
                                                 <div className={styles.actionButtons}>
-                                                    <button
-                                                        className={styles.deleteButton}
-                                                        onClick={() => handleDelete(donation.donationId || donation.id)}
-                                                        title="Excluir"
-                                                    >
-                                                        <FaTrash />
-                                                    </button>
+                                                    {isAdmin && (
+                                                        <button
+                                                            className={styles.deleteButton}
+                                                            onClick={() => handleDelete(donation.donationId || donation.id)}
+                                                            title="Excluir"
+                                                        >
+                                                            <FaTrash />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
@@ -588,6 +617,27 @@ export default function ListaDoacoesPage() {
                                 )}
                             </tbody>
                         </table>
+                    </div>
+                    <div className={styles.paginationControls} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, flexWrap: "wrap", padding: "16px 8px" }}>
+                        <button
+                            type="button"
+                            className={styles.cancelButton}
+                            disabled={pageInfo.number <= 0 || loading}
+                            onClick={() => loadDonations(filters, pageInfo.number - 1)}
+                        >
+                            Anterior
+                        </button>
+                        <span aria-live="polite">
+                            Página {pageInfo.totalPages === 0 ? 0 : pageInfo.number + 1} de {pageInfo.totalPages} · {pageInfo.totalElements} doações
+                        </span>
+                        <button
+                            type="button"
+                            className={styles.cancelButton}
+                            disabled={loading || pageInfo.number >= pageInfo.totalPages - 1}
+                            onClick={() => loadDonations(filters, pageInfo.number + 1)}
+                        >
+                            Próxima
+                        </button>
                     </div>
                 </div>
             </div>
@@ -759,31 +809,13 @@ export default function ListaDoacoesPage() {
                                     </div>
 
                                     <div className={styles.createNewItem}>
-                                        <div
-                                            className={styles.newItemInputGroup}
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowNewItemModal(true)}
+                                            className={styles.addSecondaryButton}
                                         >
-                                            <input
-                                                type="text"
-                                                placeholder="Nome do novo item..."
-                                                value={newItemName}
-                                                onChange={(e) =>
-                                                    setNewItemName(
-                                                        e.target.value
-                                                    )
-                                                }
-                                                className={styles.searchInput}
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={handleAddNewItem}
-                                                disabled={!newItemName.trim()}
-                                                className={
-                                                    styles.addSecondaryButton
-                                                }
-                                            >
-                                                Criar Novo
-                                            </button>
-                                        </div>
+                                            Cadastrar novo item
+                                        </button>
                                     </div>
                                 </div>
 
@@ -811,26 +843,47 @@ export default function ListaDoacoesPage() {
                                                 }
                                                 className={styles.selectedItem}
                                             >
-                                                <div
-                                                    className={styles.itemInfo}
-                                                >
+                                                <div className={styles.itemInfo}>
                                                     <strong>
                                                         {si.isNew
                                                             ? si.nome
-                                                            : si.item?.nome ||
-                                                              si.item
-                                                                  ?.descricao ||
-                                                              "Item"}
+                                                            : si.item?.nome || si.item?.descricao || "Item"}
                                                     </strong>
-                                                    {si.isNew && (
-                                                        <span
-                                                            className={
-                                                                styles.newItemBadge
-                                                            }
-                                                        >
-                                                            Novo Item
-                                                        </span>
-                                                    )}
+                                                    {si.isNew && <span className={styles.newItemBadge}>Novo Item</span>}
+                                                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8, width: "100%", marginTop: 8 }}>
+                                                        <label style={{ display: "grid", gap: 4, fontSize: "0.8rem" }}>
+                                                            Categoria
+                                                            <select
+                                                                value={si.categoryId || ""}
+                                                                onChange={(event) => setSelectedItems((current) => current.map((entry) =>
+                                                                    entry.itemId === si.itemId ? { ...entry, categoryId: event.target.value } : entry
+                                                                ))}
+                                                                required
+                                                                style={{ width: "100%", padding: "8px", fontSize: "0.9rem" }}
+                                                            >
+                                                                <option value="">Selecione</option>
+                                                                {categories.map((category) => (
+                                                                    <option key={category.categoryId} value={category.categoryId}>{category.name}</option>
+                                                                ))}
+                                                            </select>
+                                                        </label>
+                                                        <label style={{ display: "grid", gap: 4, fontSize: "0.8rem" }}>
+                                                            Estado de conservação
+                                                            <select
+                                                                value={si.conservationState || "GOOD"}
+                                                                onChange={(event) => setSelectedItems((current) => current.map((entry) =>
+                                                                    entry.itemId === si.itemId ? { ...entry, conservationState: event.target.value } : entry
+                                                                ))}
+                                                                required
+                                                                style={{ width: "100%", padding: "8px", fontSize: "0.9rem" }}
+                                                            >
+                                                                <option value="NEW">Novo</option>
+                                                                <option value="GOOD">Bom</option>
+                                                                <option value="FAIR">Regular</option>
+                                                                <option value="POOR">Ruim</option>
+                                                            </select>
+                                                        </label>
+                                                    </div>
                                                 </div>
                                                 <div
                                                     className={
@@ -934,6 +987,13 @@ export default function ListaDoacoesPage() {
                         </form>
                     </div>
                 </div>
+            )}
+
+            {showNewItemModal && (
+                <NewItemModal
+                    onClose={() => setShowNewItemModal(false)}
+                    onCreated={handleNewItemCreated}
+                />
             )}
 
             <ConfirmationModal

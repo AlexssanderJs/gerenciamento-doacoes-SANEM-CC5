@@ -9,6 +9,10 @@
   align-items: center; /* Centraliza horizontalmente o conteúdo principal */
   justify-content: flex-start;
   padding-bottom: 40px; /* Espaço para o final da página */
+  margin-left: var(--sidebar-width, 220px);
+  width: calc(100% - var(--sidebar-width, 220px));
+  padding-top: 56px;
+  transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Wrapper para o formulário (centraliza e controla a largura máxima) */
@@ -176,5 +180,14 @@
   .formulario button {
     width: 95%; /* Quase largura total */
     padding: 14px 20px;
+  }
+}
+@media (max-width: 768px) {
+  .formulario button {
+    width: min(100%, 360px);
+    max-width: 100%;
+    justify-self: center;
+    padding: 10px 16px;
+    font-size: 0.95rem;
   }
 }

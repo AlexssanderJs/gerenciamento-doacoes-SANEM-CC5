@@ -2,8 +2,9 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  margin-left: 220px;
-  width: calc(100% - 220px);
+  margin-left: var(--sidebar-width, 220px);
+  transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  width: calc(100% - var(--sidebar-width, 220px));
   box-sizing: border-box;
 }
 
@@ -505,4 +506,34 @@
 .togglePassword:active {
   background: none !important;
   outline: none;
+}
+
+@media (max-width: 600px) {
+  .actionButtons {
+    min-width: 0;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .editButton,
+  .deleteButton {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    padding: 8px 10px;
+    font-size: 0.85rem;
+  }
+
+  .modalActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .modalActions > button {
+    flex: 1 1 120px;
+    min-width: 0;
+    max-width: 100%;
+  }
 }

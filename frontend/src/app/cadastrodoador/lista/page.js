@@ -12,10 +12,16 @@ import { useNotification } from "../../../components/notifications/NotificationP
 import ConfirmationModal from "../../../components/confirmation/ConfirmationModal";
 import { validateCPForCNPJ, validateEmail, validatePhone } from "../../../utils/validators";
 import { maskCPForCNPJ, maskPhone, unmask } from "../../../utils/masks";
+import authService from "../../../services/authService";
+import { normalizeRole } from "../../../utils/permissions";
 
 export default function ListaDoadores() {
   const router = useRouter();
   const { showNotification } = useNotification();
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    setIsAdmin(normalizeRole(authService.getUser()?.role) === "ADMINISTRATOR");
+  }, []);
   
   // Estados para modais e formulários
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, action: null, message: "", title: "" });
@@ -364,14 +370,16 @@ export default function ListaDoadores() {
                         >
                           <FaEdit />
                         </button>
-                        <button
-                          className={styles.deleteButton}
-                          onClick={() => handleDelete(d.id)}
-                          disabled={loading}
-                          title="Excluir"
-                        >
-                          <FaTrash />
-                        </button>
+                        {isAdmin && (
+                          <button
+                            className={styles.deleteButton}
+                            onClick={() => handleDelete(d.id)}
+                            disabled={loading}
+                            title="Excluir"
+                          >
+                            <FaTrash />
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))

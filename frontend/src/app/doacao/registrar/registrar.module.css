@@ -6,7 +6,8 @@
 
 .contentWrapper {
     flex: 1;
-    margin-left: 250px;
+    margin-left: var(--sidebar-offset, 250px);
+  transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     padding: 20px;
     margin-top: 56px;
 }
@@ -326,4 +327,86 @@
   color: #8a5208;
   font-size: 0.78rem;
   font-weight: 700;
+}
+
+
+.itemMetadataControls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 16px;
+}
+
+.itemMetadataControls label {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    color: #555;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.itemMetadataControls select {
+    min-width: 130px;
+    padding: 8px 10px;
+    border: 1px solid #d5dbe3;
+    border-radius: 6px;
+    background: #fff;
+    color: #333;
+}
+
+@media (max-width: 760px) {
+    .selectedItem {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .itemMetadataControls {
+        order: 3;
+        width: 100%;
+        margin: 0;
+        flex-wrap: wrap;
+    }
+
+    .itemControls {
+        margin-left: auto;
+    }
+}
+
+@media (max-width: 600px) {
+  .modalContent,
+  .formulario,
+  .formContainer {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .modalActions,
+  .formActions,
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .modalActions > button,
+  .formActions > button,
+  .actions > button {
+    flex: 1 1 120px;
+    min-width: 0;
+    max-width: 100%;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+  }
+
+  .submitButton,
+  .cancelButton {
+    max-width: 100%;
+    min-width: 0;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    overflow-wrap: anywhere;
+  }
 }

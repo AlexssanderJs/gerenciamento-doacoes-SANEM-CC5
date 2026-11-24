@@ -63,14 +63,12 @@ O sistema tem como objetivo o gerenciamento de um brechó beneficente que distri
 
 ### Frontend
 
-- **React 18**
-- **React Router DOM** - Roteamento
-- **Styled Components** - Estilização
-- **React Hook Form** - Gerenciamento de formulários
-- **React Query** - Gerenciamento de estado do servidor
+- **Next.js 15** (App Router) + **React 19**
+- **CSS Modules** - Estilização
 - **Axios** - Cliente HTTP
 - **React Icons** - Ícones
 - **Leaflet / React-Leaflet** - Mapa interativo dos pontos de coleta (OpenStreetMap)
+- **driver.js** - Tour guiado / onboarding (RF11)
 
 ### DevOps
 
@@ -79,22 +77,33 @@ O sistema tem como objetivo o gerenciamento de um brechó beneficente que distri
 
 ## 📁 Estrutura do Projeto
 
+O backend segue **organização por camadas** (_package-by-layer_): cada camada técnica
+fica em seu próprio pacote sob `com.sanem`.
+
 ```
-JavaLovers/
+gerenciamento-doacoes-SANEM/
 ├── backend/                    # Backend Java Spring Boot
 │   ├── src/
 │   │   ├── main/
-│   │   │   ├── java/com/javalovers/
-│   │   │   │   ├── JavaLoversApplication.java
-│   │   │   │   ├── common/                 # Config, segurança, utilidades, soft delete
-│   │   │   │   └── core/                   # Módulos de domínio
-│   │   │   │       ├── beneficiary/        # Beneficiários (CRUD + status INACTIVE)
-│   │   │   │       ├── collectionpoint/    # Pontos de coleta e sedes (NOVO)
-│   │   │   │       ├── donor/
-│   │   │   │       └── ...
+│   │   │   ├── java/com/sanem/
+│   │   │   │   ├── SanemApplication.java
+│   │   │   │   ├── config/                 # SecurityConfig, WebConfig
+│   │   │   │   ├── controller/             # Endpoints REST
+│   │   │   │   ├── service/                # Regras de negócio
+│   │   │   │   ├── repository/             # Spring Data JPA (+ SoftDeleteRepository)
+│   │   │   │   ├── mapper/                 # Conversão entity <-> DTO
+│   │   │   │   ├── model/
+│   │   │   │   │   ├── entity/             # Entidades JPA
+│   │   │   │   │   ├── dto/                # Requests e responses
+│   │   │   │   │   └── enums/              # Enumerações
+│   │   │   │   ├── exception/              # GlobalExceptionHandler e erros
+│   │   │   │   ├── security/               # JwtFilter, JwtService
+│   │   │   │   ├── specification/          # Filtros dinâmicos (JPA Specifications)
+│   │   │   │   ├── util/                   # Utilitários (HTTP, QR Code, relatórios)
+│   │   │   │   └── validation/             # Validações customizadas (CPF/CNPJ, senha)
 │   │   │   └── resources/
 │   │   │       ├── application.yml
-│   │   │       └── db/migration/           # Migrations Flyway (V2..V10)
+│   │   │       └── db/migration/           # Migrations Flyway
 │   │   └── test/
 │   ├── pom.xml
 │   └── Dockerfile
@@ -114,7 +123,7 @@ JavaLovers/
 │   │   └── hooks/
 │   ├── package.json
 │   └── Dockerfile
-├── Banco de Dados/            # Scripts do banco de dados
+├── db/                        # Scripts e diagrama do banco de dados
 │   ├── Diagrama MER.pdf
 │   ├── script-create-tables.sql
 │   └── script-insert-values.sql
@@ -183,7 +192,7 @@ JavaLovers/
     export SPRING_DATASOURCE_PASSWORD="<senha>"
 
     mvn clean package
-    java -jar target/javalovers-backend-1.0.0.jar
+    java -jar target/sanem-backend-1.0.0.jar
     ```
 
 #### Frontend
@@ -207,93 +216,98 @@ JavaLovers/
 
 ## 🔧 Configuração do Banco de Dados
 
-O banco é **PostgreSQL hospedado no NeonDB**. Não há banco local: o backend conecta direto no
-Neon, e o esquema + seed são aplicados pela **Flyway** no startup
-(`backend/src/main/resources/db/migration/V1__init_schema.sql` e `V2__seed_data.sql`).
+O SANEM utiliza **PostgreSQL hospedado no NeonDB** (nuvem) — não há banco local. O backend conecta no Neon pela connection string definida no `.env`; o Docker Compose sobe apenas backend, frontend e mailpit (e-mail de desenvolvimento).
 
-### Configuração das Credenciais
+### Configuração
 
-As credenciais vêm de variáveis de ambiente (nunca commitadas). Copie `.env.example` para `.env`
-e preencha com os dados do Neon:
+1. Copie `.env.example` para `.env`.
+2. Preencha a connection string do seu projeto Neon e um `JWT_SECRET` aleatório (≥ 32 bytes, ex.: `openssl rand -base64 48`):
 
-```bash
-SPRING_DATASOURCE_URL=jdbc:postgresql://<host-neon>/<database>?sslmode=require
-SPRING_DATASOURCE_USERNAME=<usuario-neon>
-SPRING_DATASOURCE_PASSWORD=<senha-neon>
-```
+    SPRING_DATASOURCE_URL=jdbc:postgresql://<host>.neon.tech/<database>?sslmode=require
+    SPRING_DATASOURCE_USERNAME=<usuario-neon>
+    SPRING_DATASOURCE_PASSWORD=<senha-neon>
+    JWT_SECRET=<segredo-aleatorio-com-32-bytes-ou-mais>
 
-> O Neon **exige SSL** — mantenha `?sslmode=require` na URL.
-> O `application.yml` já lê essas variáveis (com fallback para um Postgres local em dev).
+3. Inicie os serviços na raiz do repositório:
 
-### Dados de exemplo (dev) x produção
+    docker compose up -d --build
 
-O comportamento do seed é controlado pelo profile do Spring (`SPRING_PROFILES_ACTIVE`):
+O backend conecta no Neon, as migrations Flyway criam o esquema e, com `SPRING_PROFILES_ACTIVE=dev`, o seed insere dados de demonstração.
 
-- **`dev`** — a Flyway aplica o schema (`db/migration`) **e** o seed de exemplo (`db/seed`:
-  usuários, doadores, beneficiários, pontos de coleta). Use no banco de desenvolvimento do Neon.
-- **`prod`** (ou qualquer valor diferente de `dev`) — a Flyway aplica **somente o schema**;
-  nenhum dado é inserido na primeira subida. Os usuários/dados são cadastrados manualmente.
+Variáveis relevantes no `.env`:
 
-Assim, o banco de **produção** do Neon sobe limpo, e o de **desenvolvimento** já vem populado
-para testes. (A configuração de limite de retirada é criada automaticamente pela aplicação quando
-necessária, então produção funciona sem seed.)
+- SPRING_DATASOURCE_URL / SPRING_DATASOURCE_USERNAME / SPRING_DATASOURCE_PASSWORD: conexão com o PostgreSQL do NeonDB.
+- SPRING_PROFILES_ACTIVE: `dev` (schema + seed) ou `prod` (apenas schema).
+- JWT_SECRET: segredo JWT aleatório com pelo menos 32 bytes.
+- PRIVACY_POLICY_VERSION: versão vigente da política (padrão SANEM-PRIVACY-1.1).
+- APP_CORS_ALLOWED_ORIGINS: origens frontend permitidas em desenvolvimento.
+- MAIL_HOST / MAIL_PORT: servidor de e-mail de desenvolvimento (mailpit; UI em http://localhost:8025).
+
+Para rodar o backend fora do Docker, exporte as mesmas variáveis `SPRING_DATASOURCE_*` no ambiente e execute `mvn spring-boot:run` na pasta `backend` (mantenha `sslmode=require` para o Neon).
+
+### Seeds e ambientes
+
+- dev: aplica migrations e dados de demonstração.
+- prod: aplica somente migrations, sem seed de demonstração.
+
+Não utilize os usuários e senhas de demonstração em produção. Configure credenciais próprias e segredos fortes.
 
 ## 📚 Funcionalidades
 
 ### Implementadas
 
-- ✅ Estrutura base do backend Spring Boot
-- ✅ Configuração de segurança com Spring Security
-- ✅ Interface React moderna e responsiva
-- ✅ Páginas de Login e Cadastro
-- ✅ Dashboard do usuário
-- ✅ Configuração de CORS
-- ✅ Containerização com Docker
-
-### Em Desenvolvimento
-
 #### 👥 Gestão de Beneficiários
 
-- 🔄 CRUD completo de beneficiários
-- 🔄 Sistema de aprovação de cadastros
-- 🔄 Inativação/reativação de beneficiários aprovados (status `INACTIVE`)
-- 🔄 Geração de cartões de identificação
-- 🔄 Histórico de atendimentos
+- ✅ CRUD completo de beneficiários
+- ✅ Sistema de aprovação de cadastros (aprovar/rejeitar)
+- ✅ Inativação/reativação de beneficiários aprovados (status `INACTIVE`)
+- ✅ Geração de cartões de identificação (PDF)
 
 #### 📍 Pontos de Coleta e Sedes
 
-- 🔄 CRUD de pontos de coleta parceiros e sedes de entidades assistenciais
-- 🔄 Endereço e horário de funcionamento por local
-- 🔄 Mapa interativo (Leaflet + OpenStreetMap) com as localizações
+- ✅ CRUD de pontos de coleta parceiros e sedes de entidades assistenciais
+- ✅ Endereço e horário de funcionamento por local
+- ✅ Mapa interativo (Leaflet + OpenStreetMap) com as localizações
 
 #### 📦 Controle de Estoque
 
-- 🔄 Cadastro de itens doados
-- 🔄 Sistema de códigos únicos
-- 🔄 Controle de entrada e saída
-- 🔄 Alertas de estoque baixo
+- ✅ Cadastro e triagem de itens doados
+- ✅ Categorias e estado de conservação (RF16)
+- ✅ Controle de entrada e saída (ledger de transações de inventário)
+- ✅ Estoque mínimo com notificações de estoque baixo (RF19)
 
-#### 🎁 Sistema de Distribuição
+#### 🎁 Distribuição
 
-- 🔄 Registro de retiradas
-- 🔄 Controle de limites mensais
-- 🔄 Baixa automática no estoque
-- 🔄 Validação de regras de distribuição
+- ✅ Registro de retiradas com baixa automática no estoque
+- ✅ Controle de limites mensais (configuração + reset)
+- ✅ Validação das regras de distribuição
 
-#### 👨‍💼 Administração
+#### 📣 Demandas Prioritárias (RF20)
 
-- 🔄 Sistema de permissões (Atendente/Administrador)
-- 🔄 Gestão de usuários
-- 🔄 Relatórios de doações
-- 🔄 Relatórios de distribuições
-- 🔄 Dashboard administrativo
+- ✅ Cadastrar, consultar, atualizar e inativar demandas por itens do estoque
 
-#### 🔧 Infraestrutura
+#### 👨‍💼 Administração e Relatórios
 
-- 🔄 Sistema de autenticação JWT
-- 🔄 Integração frontend-backend
-- 🔄 Validação de formulários
-- 🔄 Testes unitários e de integração
+- ✅ Sistema de permissões (Administrador/Atendente/Avaliador)
+- ✅ Gestão de usuários e perfis
+- ✅ Relatórios de doações, distribuições e posição de estoque (CSV/PDF)
+
+#### 🔐 Autenticação e Segurança
+
+- ✅ Autenticação JWT
+- ✅ Recuperação e alteração de senha (com política de senha forte)
+- ✅ Validação de CPF/CNPJ e de formulários
+
+#### 🧭 Experiência do Usuário
+
+- ✅ Interface React (Next.js App Router) responsiva
+- ✅ Tour guiado nas telas (onboarding, RF11)
+- ✅ Containerização com Docker e CORS configurado
+
+### Em evolução
+
+- 🔄 Ampliação da cobertura de testes automatizados
+- 🔄 Dashboard administrativo com indicadores
 
 ## 🧪 Testes
 
@@ -326,3 +340,30 @@ mvn clean package
 cd frontend
 npm run build
 ```
+
+
+## Consentimento e chave JWT
+
+O backend exige um segredo JWT configurado na variável de ambiente `JWT_SECRET`, com pelo menos 32 bytes. Gere um valor aleatório forte e configure-o no ambiente do backend; não reutilize o valor de exemplo nem versione o arquivo `.env`.
+
+Após aplicar as migrations V14 e V15, usuários que ainda não registraram o aceite da política de privacidade serão direcionados à tela de consentimento. O aceite fica associado à versão `SANEM-PRIVACY-1.1` e é necessário para acessar as demais rotas protegidas da API.
+
+## Segurança, perfis, privacidade e desempenho
+
+O backend monta as permissões a partir do perfil persistido do usuário em cada requisição autenticada. Perfis desconhecidos não recebem acesso às rotas funcionais. A matriz de permissões está em backend/src/main/java/com/sanem/config/SecurityConfig.java.
+
+Perfis: Administrator/Administrador gerencia usuários, perfis e operações administrativas; Attendant/Atendente/Collaborator/Colaborador executa operações operacionais permitidas; Evaluator/Avaliador consulta e avalia beneficiários, além das consultas permitidas. O frontend oculta telas e ações, mas o controle real permanece no backend.
+
+As ações de doações, retiradas e avaliação de beneficiários identificam o operador pelo usuário autenticado. IDs de atendente/avaliador enviados pelo navegador não são usados como fonte de identidade.
+
+A versão da política é configurada por PRIVACY_POLICY_VERSION (padrão SANEM-PRIVACY-1.1). O backend só concede permissões de negócio quando o aceite corresponde à versão vigente. O histórico de aceite e revogação é auditado. Usuários podem exportar os dados básicos da própria conta e registrar solicitações de acesso, correção, portabilidade, oposição ou eliminação; administradores acompanham e respondem.
+
+Antes de utilizar dados pessoais reais, a organização responsável deve preencher a identificação do controlador e o canal de privacidade na política, definir as bases legais por finalidade e detalhar compartilhamentos, operadores e retenção. Solicitações de eliminação são registradas para análise e não geram exclusão automática; o controlador precisa validar identidade, obrigações de retenção e resposta. O export atual não é uma exportação completa dos dados de doadores e beneficiários.
+
+O CORS de desenvolvimento é controlado por APP_CORS_ALLOWED_ORIGINS. O padrão permite somente http://localhost:3000 e http://127.0.0.1:3000.
+
+Doações e pontos de coleta usam endpoints paginados, e a migration V18 cria índices para as consultas frequentes. Para comprovar o requisito de 2 segundos, execute tests/performance/sanem-load-test.js conforme docs/performance-test.md com volume de dados representativo. Índices e paginação, por si só, não comprovam o SLA.
+
+### HTTPS
+
+HTTPS não faz parte deste ajuste: o ambiente de desenvolvimento continua em HTTP local. Configure HTTPS, certificados e proxy reverso na implantação de produção antes de disponibilizar o sistema publicamente.

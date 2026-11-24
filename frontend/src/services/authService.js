@@ -1,5 +1,4 @@
 // Serviço de autenticação
-import apiService from './api';
 import { API_CONFIG } from '../config/api';
 
 class AuthService {
@@ -42,40 +41,97 @@ class AuthService {
     }
   }
 
-  async login(username, password) {
+  async postPublicAuth(endpoint, payload, defaultErrorMessage) {
     try {
-      if (!username || !password) {
-        throw new Error('Usuário e senha são obrigatórios');
-      }
-
-      const response = await fetch(`${this.baseURL}/auth/login`, {
+      const response = await fetch(`${this.baseURL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ login: username, password: password })
+        body: JSON.stringify(payload),
       });
 
+      const data = await response.json().catch(() => ({}));
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Usuário ou senha incorretos');
+        const message =
+          data?.details ||
+          data?.message ||
+          (data?.errors ? Object.values(data.errors).join('; ') : null) ||
+          data?.error ||
+          defaultErrorMessage;
+        throw new Error(message);
       }
 
-      const data = await response.json();
-
-      const user = {
-        id: data.userId,
-        name: data.name,
-        email: data.email,
-        role: data.role,
-        perfilId: null
-      };
-
-      this.setAuthData(data.token, user);
-
-      return { success: true, user, token: data.token };
+      return data;
     } catch (error) {
-      console.error('Erro no login:', error);
+      if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
+        throw new Error(
+          `Não foi possível conectar ao servidor. Verifique se o backend está rodando em ${this.baseURL}`
+        );
+      }
       throw error;
     }
+  }
+
+  async login(username, password) {
+    if (!username || !password) {
+      throw new Error('Usuário e senha são obrigatórios');
+    }
+
+    const data = await this.postPublicAuth(
+      '/auth/login',
+      { login: username, password },
+      'Usuário ou senha incorretos'
+    );
+
+    const user = {
+      id: data.userId,
+      name: data.name,
+      email: data.email,
+      role: data.role,
+      perfilId: null,
+      privacyConsent: Boolean(data.privacyConsent),
+      privacyConsentVersion: data.privacyConsentVersion || null,
+    };
+
+    this.setAuthData(data.token, user);
+
+    return { success: true, user, token: data.token };
+  }
+
+  async forgotPassword(email) {
+    return this.postPublicAuth(
+      '/auth/forgot-password',
+      { email },
+      'Não foi possível processar a solicitação de recuperação de senha'
+    );
+  }
+
+  async validateResetToken(token) {
+    return this.postPublicAuth(
+      '/auth/reset-password/validate',
+      { token },
+      'Não foi possível validar o link de recuperação'
+    );
+  }
+
+  async resetPassword(token, newPassword, confirmPassword) {
+    return this.postPublicAuth(
+      '/auth/reset-password',
+      { token, newPassword, confirmPassword },
+      'Não foi possível redefinir a senha'
+    );
+  }
+
+  updatePrivacyConsent(accepted, version = 'SANEM-PRIVACY-1.1') {
+    const token = this.getToken();
+    const user = this.getUser();
+    if (!token || !user) return;
+
+    this.setAuthData(token, {
+      ...user,
+      privacyConsent: Boolean(accepted),
+      privacyConsentVersion: accepted ? version : user.privacyConsentVersion,
+    });
   }
 
   logout() {
@@ -95,7 +151,7 @@ class AuthService {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
-        }
+        },
       });
 
       if (!response.ok) {
@@ -103,6 +159,20 @@ class AuthService {
         return false;
       }
 
+      const session = await response.json().catch(() => null);
+      if (!session?.valid) {
+        this.clearAuthData();
+        return false;
+      }
+
+      const currentUser = this.getUser() || {};
+      this.setAuthData(token, {
+        ...currentUser,
+        privacyConsent: Boolean(session.privacyConsent),
+        privacyConsentVersion: session.privacyConsentVersion || null,
+        currentPrivacyPolicyVersion: session.currentPrivacyPolicyVersion || null,
+        role: session.role || currentUser.role,
+      });
       return true;
     } catch (error) {
       console.error('Erro na validação do token:', error);

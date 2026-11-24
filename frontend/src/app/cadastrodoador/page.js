@@ -10,6 +10,7 @@ import { useApi } from "../../hooks/useApi";
 import { useNotification } from "../../components/notifications/NotificationProvider";
 import { validateCPForCNPJ, validateEmail, validatePhone } from "../../utils/validators";
 import { maskCPForCNPJ, maskPhone, unmask } from "../../utils/masks";
+import PrivacyConsentFields, { DEFAULT_PRIVACY, validatePrivacy } from "../../components/privacy/PrivacyConsentFields";
 
 const CadastroDoador = () => {
   const [form, setForm] = useState({
@@ -17,6 +18,7 @@ const CadastroDoador = () => {
     telefoneCelular: "",
     email: "",
     cpf: "",
+    ...DEFAULT_PRIVACY,
   });
   const [fieldErrors, setFieldErrors] = useState({});
   const router = useRouter();
@@ -91,6 +93,12 @@ const CadastroDoador = () => {
     const cpfCnpjValidation = validateCPForCNPJ(form.cpf);
     const phoneValidation = validatePhone(form.telefoneCelular);
 
+    const privacyError = validatePrivacy(form);
+    if (privacyError) {
+      showNotification(privacyError, "error");
+      return;
+    }
+
     // Verifica se há erros de validação
     if (!emailValid || !phoneValid || !cpfValid) {
       showNotification("Por favor, corrija os erros nos campos antes de enviar.", "error");
@@ -113,7 +121,8 @@ const CadastroDoador = () => {
         nomeCompleto: "",
         telefoneCelular: "",
         email: "",
-        cpf: ""
+        cpf: "",
+        ...DEFAULT_PRIVACY
       });
       
       showNotification("Doador cadastrado com sucesso!", "success");
@@ -173,6 +182,11 @@ const CadastroDoador = () => {
               />
               {fieldErrors.cpf && <span className={styles.fieldError}>{fieldErrors.cpf}</span>}
             </div>
+            <PrivacyConsentFields
+              subject="doador"
+              value={{ legalBasis: form.legalBasis, privacyPurpose: form.privacyPurpose, privacyConsent: form.privacyConsent }}
+              onChange={(privacy) => setForm((current) => ({ ...current, ...privacy }))}
+            />
             <hr className={styles.separador} />
             
             <button type="submit" disabled={loading}>

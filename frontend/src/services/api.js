@@ -33,7 +33,7 @@ class ApiService {
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 const apiError = new Error(
-                    errorData?.message || errorData?.error || `HTTP error! status: ${response.status}`
+                    errorData?.details || errorData?.message || errorData?.error || `HTTP error! status: ${response.status}`
                 );
                 apiError.status = response.status;
                 apiError.response = errorData;
@@ -76,6 +76,17 @@ class ApiService {
         return this.request(endpoint)
     }
 
+    // RNF05: busca paginada no servidor (evita carregar todos os doadores na tela de doação)
+    async searchDonors(term, size = 20) {
+        const value = (term || "").trim()
+        if (!value) return []
+        const isDocument = /^[\d.\-/]+$/.test(value)
+        const params = new URLSearchParams({ page: "0", size: String(size) })
+        params.set(isDocument ? "cpfCnpj" : "name", isDocument ? value.replace(/\D/g, "") : value)
+        const page = await this.request(`/donor?${params.toString()}`)
+        return page?.content || []
+    }
+
     async getDonor(id) {
         return this.request(`/donor/${id}`)
     }
@@ -102,9 +113,9 @@ class ApiService {
 
     // Métodos para Itens (Estoque)
     async getItems(filters = {}) {
-        const queryParams = new URLSearchParams(filters).toString()
-        const endpoint = `/item/all${queryParams ? `?${queryParams}` : ""}`
-        return this.request(endpoint)
+        const query = new URLSearchParams({ page: "0", size: "200", ...filters }).toString()
+        const page = await this.request(`/item?${query}`)
+        return page?.content || []
     }
 
     async getItem(id) {
@@ -142,6 +153,18 @@ class ApiService {
         return this.request(endpoint)
     }
 
+    async getDonationAttendants() {
+        return this.request("/donation/attendants")
+    }
+
+    async getDonationsPage(filters = {}, page = 0, size = 50) {
+        const clean = Object.fromEntries(
+            Object.entries(filters).filter(([, value]) => value !== "" && value !== null && value !== undefined)
+        )
+        const query = new URLSearchParams({ ...clean, page: String(page), size: String(size), sort: "donationDate,desc" }).toString()
+        return this.request(`/donation/page?${query}`)
+    }
+
     async getDonation(id) {
         return this.request(`/donation/${id}`)
     }
@@ -160,6 +183,51 @@ class ApiService {
     }
 
     // Métodos para Usuários
+    async getMyProfile() {
+        return this.request("/user/me")
+    }
+
+    async acceptPrivacyConsent() {
+        return this.request("/user/me/consent", { method: "POST" })
+    }
+
+    async revokePrivacyConsent() {
+        return this.request("/user/me/consent", { method: "DELETE" })
+    }
+
+    async getMyPrivacyData() {
+        return this.request("/user/me/privacy-data")
+    }
+
+    async getMyPrivacyRequests() {
+        return this.request("/privacy-request/me")
+    }
+
+    async getPrivacyRequests(page = 0, size = 20) {
+        return this.request(`/privacy-request?page=${page}&size=${size}&sort=createdAt,desc`)
+    }
+
+    async updatePrivacyRequest(id, updateData) {
+        return this.request(`/privacy-request/${id}`, {
+            method: "PATCH",
+            body: JSON.stringify(updateData)
+        })
+    }
+
+    async createPrivacyRequest(requestData) {
+        return this.request("/privacy-request/me", {
+            method: "POST",
+            body: JSON.stringify(requestData)
+        })
+    }
+
+    async changeMyPassword(passwordData) {
+        return this.request("/user/me/password", {
+            method: "PATCH",
+            body: JSON.stringify(passwordData)
+        })
+    }
+
     async getUsers() {
         return this.request("/user/all")
     }
@@ -382,9 +450,16 @@ class ApiService {
 
     // Métodos para Pontos de Coleta
     async getCollectionPoints(filters = {}) {
-        const queryParams = new URLSearchParams(filters).toString()
-        const endpoint = `/collection-point/all${queryParams ? `?${queryParams}` : ""}`
-        return this.request(endpoint)
+        const page = await this.getCollectionPointsPage(filters, 0, 200)
+        return page?.content || []
+    }
+
+    async getCollectionPointsPage(filters = {}, page = 0, size = 50) {
+        const clean = Object.fromEntries(
+            Object.entries(filters).filter(([, value]) => value !== "" && value !== null && value !== undefined)
+        )
+        const query = new URLSearchParams({ ...clean, page: String(page), size: String(size), sort: "name,asc" }).toString()
+        return this.request(`/collection-point?${query}`)
     }
 
     async getCollectionPoint(id) {
@@ -497,6 +572,43 @@ class ApiService {
         });
     }
 
+    // Metodos para Exportacao de Relatorios Gerenciais (PDF e CSV)
+    async exportReport(type, format, filters = {}) {
+        const cleanFilters = Object.fromEntries(
+            Object.entries(filters).filter(([_, v]) => v !== "" && v !== null && v !== undefined)
+        );
+        const queryParams = new URLSearchParams(cleanFilters).toString();
+        const endpoint = `/report/${type}/${format.toLowerCase()}${queryParams ? `?${queryParams}` : ""}`;
+        const url = `${this.baseURL}${endpoint}`;
+
+        const token = authService.getToken();
+        const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+
+        const response = await fetch(url, {
+            headers: {
+                ...authHeader
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.details || errorData.message || `Erro ao exportar relatorio (${response.status})`);
+        }
+
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        const extension = format.toLowerCase();
+        link.download = `relatorio_${type}_${new Date().toISOString().slice(0, 10)}.${extension}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(blobUrl);
+
+        return { success: true };
+    }
+
     // Métodos para Notificações (RF19 - estoque mínimo)
     async getNotifications({ unreadOnly = false, limit = 20 } = {}) {
         const queryParams = new URLSearchParams({ unreadOnly, limit }).toString()
@@ -519,6 +631,7 @@ class ApiService {
         return this.getItems({ lowStock: true })
     }
 }
+
 
 // Instância singleton do serviço
 const apiService = new ApiService()

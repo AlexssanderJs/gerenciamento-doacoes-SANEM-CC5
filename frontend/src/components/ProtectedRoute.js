@@ -1,7 +1,7 @@
 "use client";
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import authService from '../services/authService';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import authService from "../services/authService";
 
 export default function ProtectedRoute({ children }) {
   const [isLoading, setIsLoading] = useState(true);
@@ -12,14 +12,17 @@ export default function ProtectedRoute({ children }) {
     const checkAuth = async () => {
       try {
         const authenticated = await authService.validateToken();
+        const user = authService.getUser();
         setIsAuthenticated(authenticated);
-        
+
         if (!authenticated) {
-          router.push('/');
+          router.replace("/");
+        } else if (user?.privacyConsent !== true && window.location.pathname !== "/politica-privacidade") {
+          router.replace("/politica-privacidade");
         }
       } catch (error) {
-        console.error('Erro na verificação de autenticação:', error);
-        router.push('/');
+        console.error("Erro na verificação de autenticação:", error);
+        router.replace("/");
       } finally {
         setIsLoading(false);
       }
@@ -30,21 +33,12 @@ export default function ProtectedRoute({ children }) {
 
   if (isLoading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh',
-        fontSize: '18px'
-      }}>
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", fontSize: "18px" }}>
         Carregando...
       </div>
     );
   }
 
-  if (!isAuthenticated) {
-    return null;
-  }
-
+  if (!isAuthenticated) return null;
   return children;
 }

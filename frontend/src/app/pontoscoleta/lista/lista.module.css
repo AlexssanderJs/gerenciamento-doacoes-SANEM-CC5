@@ -2,8 +2,9 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  margin-left: 250px;
-  width: calc(100% - 250px);
+  margin-left: var(--sidebar-offset, 250px);
+  width: calc(100% - var(--sidebar-offset, 250px));
+  transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   box-sizing: border-box;
 }
 
@@ -322,5 +323,41 @@
   }
   .filterGroupText {
     width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .addButton {
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    flex: 0 0 44px;
+    align-self: flex-start;
+    padding: 0;
+  }
+
+  .actionButtons {
+    min-width: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .editButton,
+  .deleteButton,
+  .approveButton,
+  .rejectButton {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    padding: 8px 10px;
+    font-size: 0.85rem;
+    line-height: 1.2;
+    white-space: normal;
   }
 }
