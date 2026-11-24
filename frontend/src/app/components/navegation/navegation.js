@@ -21,7 +21,8 @@ import {
     FaAngleDoubleRight,
     FaMapMarkerAlt,
     FaBullhorn,
-    FaTimes
+    FaTimes,
+    FaShieldAlt
 } from "react-icons/fa"
 
 const STORAGE_KEY = "sanem_sidebar_condensed"
@@ -38,6 +39,7 @@ const entries = [
     { key: "reports", path: "/relatorios", label: "Relatórios", icon: <FaChartBar />, group: "OTHERS" },
     { key: "settings", path: "/configuracoes", label: "Configurações", icon: <FaCog />, group: "OTHERS" },
     { key: "users", path: "/usuarios", label: "Usuários", icon: <FaUser />, group: "OTHERS" },
+    { key: "privacyRequests", path: "/solicitacoes-privacidade", label: "Solicitações LGPD", icon: <FaShieldAlt />, group: "OTHERS" },
     { key: "help", path: "/ajuda", label: "Ajuda", icon: <FaQuestionCircle />, group: "OTHERS", tour: "nav-ajuda" },
 ]
 

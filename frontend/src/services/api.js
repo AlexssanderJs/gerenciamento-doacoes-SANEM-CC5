@@ -187,6 +187,17 @@ class ApiService {
         return this.request("/privacy-request/me")
     }
 
+    async getPrivacyRequests(page = 0, size = 20) {
+        return this.request(`/privacy-request?page=${page}&size=${size}&sort=createdAt,desc`)
+    }
+
+    async updatePrivacyRequest(id, updateData) {
+        return this.request(`/privacy-request/${id}`, {
+            method: "PATCH",
+            body: JSON.stringify(updateData)
+        })
+    }
+
     async createPrivacyRequest(requestData) {
         return this.request("/privacy-request/me", {
             method: "POST",

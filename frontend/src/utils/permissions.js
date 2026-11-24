@@ -19,7 +19,7 @@ export function canAccessMenu(roleValue, key) {
   const role = normalizeRole(roleValue);
   if (role === "ADMINISTRATOR") return true;
   if (role === "ATTENDANT") {
-    return !["users", "settings"].includes(key);
+    return !["users", "settings", "privacyRequests"].includes(key);
   }
   if (role === "EVALUATOR") {
     return ["home", "beneficiaries", "collectionPoints", "demands", "reports", "help"].includes(key);
@@ -34,7 +34,7 @@ export function canAccessPath(roleValue, pathname = "") {
   if (pathname === "/politica-privacidade" || pathname.startsWith("/perfil")) return true;
 
   if (role === "ATTENDANT") {
-    return !pathname.startsWith("/usuarios") && !pathname.startsWith("/configuracoes");
+    return !pathname.startsWith("/usuarios") && !pathname.startsWith("/configuracoes") && !pathname.startsWith("/solicitacoes-privacidade");
   }
 
   if (role === "EVALUATOR") {
