@@ -72,6 +72,24 @@ public class DonorController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/{id}/privacy-export")
+    public ResponseEntity<com.sanem.model.dto.DataSubjectExportDTO> exportData(@PathVariable Long id) {
+        Donor donor = donorService.getOrNull(id);
+        if(donor == null) return ResponseEntity.notFound().build();
+
+        return ResponseEntity.ok(donorService.exportData(donor));
+    }
+
+    @PostMapping("/{id}/anonymize")
+    public ResponseEntity<Void> anonymize(@PathVariable Long id) {
+        Donor donor = donorService.getOrNull(id);
+        if(donor == null) return ResponseEntity.notFound().build();
+
+        donorService.anonymize(donor);
+
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         Donor donor = donorService.getOrNull(id);

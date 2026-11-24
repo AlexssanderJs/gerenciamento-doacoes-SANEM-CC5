@@ -76,6 +76,17 @@ class ApiService {
         return this.request(endpoint)
     }
 
+    // RNF05: busca paginada no servidor (evita carregar todos os doadores na tela de doação)
+    async searchDonors(term, size = 20) {
+        const value = (term || "").trim()
+        if (!value) return []
+        const isDocument = /^[\d.\-/]+$/.test(value)
+        const params = new URLSearchParams({ page: "0", size: String(size) })
+        params.set(isDocument ? "cpfCnpj" : "name", isDocument ? value.replace(/\D/g, "") : value)
+        const page = await this.request(`/donor?${params.toString()}`)
+        return page?.content || []
+    }
+
     async getDonor(id) {
         return this.request(`/donor/${id}`)
     }

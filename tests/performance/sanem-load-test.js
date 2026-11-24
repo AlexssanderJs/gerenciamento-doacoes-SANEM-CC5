@@ -8,6 +8,8 @@ const TOKEN = __ENV.TOKEN;
 const catalogDuration = new Trend("catalog_duration", true);
 const collectionPointsDuration = new Trend("collection_points_duration", true);
 const donationsDuration = new Trend("donations_duration", true);
+const donorSearchDuration = new Trend("donor_search_duration", true);
+const itemSearchDuration = new Trend("item_search_duration", true);
 
 export const options = {
   scenarios: {
@@ -21,6 +23,8 @@ export const options = {
     catalog_duration: ["p(95)<2000", "max<2000"],
     collection_points_duration: ["p(95)<2000", "max<2000"],
     donations_duration: ["p(95)<2000", "max<2000"],
+    donor_search_duration: ["p(95)<2000", "max<2000"],
+    item_search_duration: ["p(95)<2000", "max<2000"],
     http_req_failed: ["rate<0.01"],
   },
 };
@@ -49,6 +53,16 @@ export default function () {
   const donations = http.get(`${BASE_URL}/donation/page?page=0&size=50&sort=donationDate,desc`, params);
   donationsDuration.add(donations.timings.duration);
   check(donations, { "histórico de doações retorna HTTP 200": (r) => r.status === 200 });
+
+  // Busca de doadores (tela de registro de doação) e filtro do catálogo de itens
+  const term = __ENV.SEARCH_TERM || "a";
+  const donorSearch = http.get(`${BASE_URL}/donor?page=0&size=20&name=${encodeURIComponent(term)}`, params);
+  donorSearchDuration.add(donorSearch.timings.duration);
+  check(donorSearch, { "busca de doadores retorna HTTP 200": (r) => r.status === 200 });
+
+  const itemSearch = http.get(`${BASE_URL}/item?page=0&size=50&searchTerm=${encodeURIComponent(term)}`, params);
+  itemSearchDuration.add(itemSearch.timings.duration);
+  check(itemSearch, { "busca de itens retorna HTTP 200": (r) => r.status === 200 });
 
   sleep(1);
 }

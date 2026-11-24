@@ -31,6 +31,24 @@ As ações de criação de doações e retiradas, assim como aprovação/rejeiç
 
 Limites: a exportação não abrange todas as informações de doadores/beneficiários. Solicitações de eliminação são registradas para análise; o sistema não exclui automaticamente registros que possam precisar ser preservados. O controlador deve validar a identidade do titular, avaliar a base legal, os prazos e responder ao pedido.
 
+## LGPD para doadores e beneficiários (RNF04)
+
+Doadores e beneficiários não têm conta de acesso, mas seus dados pessoais (CPF/CNPJ, contato, dados socioeconômicos) são tratados. A migration V19 acrescenta a ambos:
+
+- base legal obrigatória (CONSENT, LEGAL_OBLIGATION, PUBLIC_POLICY ou LEGITIMATE_INTEREST), finalidade, data/versão do consentimento e data de anonimização;
+- a tabela data_subject_privacy_event, que audita cada cadastro, alteração e anonimização (base legal, consentimento, versão da política, operador e horário).
+
+Regras no backend (DataSubjectPrivacyService): sem base legal o cadastro é recusado; com base CONSENT o consentimento precisa estar marcado; registros anonimizados não podem mais ser alterados. Os formulários de doador e beneficiário exibem os campos e validam antes do envio.
+
+Endpoints exclusivos do ADMINISTRATOR:
+
+- GET /donor/{id}/privacy-export e GET /beneficiary/{id}/privacy-export: dados do titular e histórico de tratamento (atende pedidos de acesso/portabilidade).
+- POST /donor/{id}/anonymize e POST /beneficiary/{id}/anonymize: removem nome, documento, contato e dados socioeconômicos, mantendo o registro e as doações/retiradas para preservar a integridade e a auditoria.
+
+Registros anteriores à V19 ficam com base legal vazia. Eles precisam ser regularizados pela organização (editar o cadastro e informar a base legal).
+
+Ainda não implementado: política de retenção automática (definir prazo por finalidade e agendar a anonimização), mascaramento/criptografia do CPF em repouso e HTTPS (ver abaixo). O controlador continua responsável por validar a identidade do titular e a base legal antes de atender solicitações.
+
 ## Política antes do uso real
 
 Preencher em frontend/src/app/politica-privacidade/page.js o nome/identificação do controlador, canal oficial de privacidade, bases legais por finalidade, operadores/destinatários, compartilhamentos, critérios de retenção e procedimentos de atendimento. Não usar os placeholders da política em produção. O aceite não substitui o mapeamento dos tratamentos.
@@ -41,7 +59,7 @@ Configurar APP_CORS_ALLOWED_ORIGINS com origens explícitas separadas por vírgu
 
 ## Desempenho
 
-Os endpoints de doações e pontos de coleta são paginados. A migration V18 cria índices para catálogo, mapa e consultas de doações. O requisito p95 inferior a 2.000 ms deve ser medido pelo script tests/performance/sanem-load-test.js conforme docs/performance-test.md, com volume e hardware representativos.
+Os endpoints de doações e pontos de coleta são paginados. A migration V18 cria índices para catálogo, mapa e consultas de doações. A V21 acrescenta índices trigram (pg_trgm) para buscas "contém" em doadores, itens e pontos de coleta. A tela de registro de doação busca doadores no servidor, com debounce, em vez de carregar todos. O requisito p95 inferior a 2.000 ms deve ser medido pelo script tests/performance/sanem-load-test.js conforme docs/performance-test.md, com volume e hardware representativos (tests/performance/seed-load-data.sql gera o volume de teste). Nenhuma medição foi registrada até agora.
 
 ## HTTPS
 
