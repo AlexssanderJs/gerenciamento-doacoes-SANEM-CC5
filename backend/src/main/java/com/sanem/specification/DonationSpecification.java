@@ -52,7 +52,10 @@ public class DonationSpecification {
             query.distinct(true);
             var itemDonated = root.join("items", JoinType.INNER);
             var item = itemDonated.join("item", JoinType.INNER);
-            return cb.like(cb.lower(item.get("description")), itemName.trim().toLowerCase() + "%");
+            return cb.and(
+                    cb.isNull(item.get("deletedAt")),
+                    cb.like(cb.lower(item.get("description")), itemName.trim().toLowerCase() + "%")
+            );
         };
     }
 }

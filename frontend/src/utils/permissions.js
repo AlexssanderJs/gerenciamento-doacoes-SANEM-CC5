@@ -12,7 +12,7 @@ const ROLE_ALIASES = {
 
 export function normalizeRole(value) {
   if (!value) return "";
-  return ROLE_ALIASES[value.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").trim().toLowerCase()] || "";
+  return ROLE_ALIASES[value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase()] || "";
 }
 
 export function canAccessMenu(roleValue, key) {

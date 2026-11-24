@@ -42,3 +42,6 @@ CREATE INDEX IF NOT EXISTS idx_item_donated_active_donation
 
 CREATE INDEX IF NOT EXISTS idx_donor_name_prefix
     ON donor (lower(name) text_pattern_ops);
+
+CREATE INDEX IF NOT EXISTS idx_app_user_name_prefix
+    ON app_user (lower(name) text_pattern_ops);
