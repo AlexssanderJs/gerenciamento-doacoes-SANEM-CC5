@@ -34,6 +34,8 @@ export default function ListaDoacoesPage() {
     const [selectedItems, setSelectedItems] = useState([])
     const [searchDonor, setSearchDonor] = useState("")
     const [searchItem, setSearchItem] = useState("")
+    const [showDonorDropdown, setShowDonorDropdown] = useState(false)
+    const [showItemDropdown, setShowItemDropdown] = useState(false)
     const [newItemName, setNewItemName] = useState("")
     const [submitting, setSubmitting] = useState(false)
 
@@ -227,6 +229,8 @@ export default function ListaDoacoesPage() {
         setSelectedItems([])
         setSearchDonor("")
         setSearchItem("")
+        setShowDonorDropdown(false)
+        setShowItemDropdown(false)
         setNewItemName("")
         setShowAddModal(true)
     }
@@ -606,12 +610,22 @@ export default function ListaDoacoesPage() {
                                     type="text"
                                     placeholder="Buscar doador por nome ou CPF..."
                                     value={searchDonor}
-                                    onChange={(e) =>
+                                    onChange={(e) => {
                                         setSearchDonor(e.target.value)
-                                    }
+                                        setShowDonorDropdown(
+                                            e.target.value.trim() !== ""
+                                        )
+                                        setShowItemDropdown(false)
+                                    }}
+                                    onFocus={() => {
+                                        if (searchDonor.trim()) {
+                                            setShowDonorDropdown(true)
+                                        }
+                                        setShowItemDropdown(false)
+                                    }}
                                     className={styles.searchInput}
                                 />
-                                {searchDonor && (
+                                {showDonorDropdown && searchDonor && (
                                     <div className={styles.dropdown}>
                                         {filteredDonors.length === 0 ? (
                                             <div
@@ -631,6 +645,7 @@ export default function ListaDoacoesPage() {
                                                         setSearchDonor(
                                                             donor.nomeCompleto
                                                         )
+                                                        setShowDonorDropdown(false)
                                                     }}
                                                 >
                                                     <div>
@@ -671,12 +686,22 @@ export default function ListaDoacoesPage() {
                                             type="text"
                                             placeholder="Buscar item existente no estoque..."
                                             value={searchItem}
-                                            onChange={(e) =>
+                                            onChange={(e) => {
                                                 setSearchItem(e.target.value)
-                                            }
+                                                setShowItemDropdown(
+                                                    e.target.value.trim() !== ""
+                                                )
+                                                setShowDonorDropdown(false)
+                                            }}
+                                            onFocus={() => {
+                                                if (searchItem.trim()) {
+                                                    setShowItemDropdown(true)
+                                                }
+                                                setShowDonorDropdown(false)
+                                            }}
                                             className={styles.searchInput}
                                         />
-                                        {searchItem && (
+                                        {showItemDropdown && searchItem && (
                                             <div className={styles.dropdown}>
                                                 {filteredItems.length === 0 ? (
                                                     <div
@@ -694,11 +719,13 @@ export default function ListaDoacoesPage() {
                                                                 className={
                                                                     styles.dropdownItem
                                                                 }
-                                                                onClick={() =>
+                                                                onClick={() => {
                                                                     handleAddExistingItem(
                                                                         item
                                                                     )
-                                                                }
+                                                                    setSearchItem("")
+                                                                    setShowItemDropdown(false)
+                                                                }}
                                                             >
                                                                 <div>
                                                                     <strong>
