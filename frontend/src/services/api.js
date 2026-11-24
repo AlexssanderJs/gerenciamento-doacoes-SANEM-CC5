@@ -439,9 +439,16 @@ class ApiService {
 
     // Métodos para Pontos de Coleta
     async getCollectionPoints(filters = {}) {
-        const query = new URLSearchParams({ page: "0", size: "200", ...filters }).toString()
-        const page = await this.request(`/collection-point?${query}`)
+        const page = await this.getCollectionPointsPage(filters, 0, 200)
         return page?.content || []
+    }
+
+    async getCollectionPointsPage(filters = {}, page = 0, size = 50) {
+        const clean = Object.fromEntries(
+            Object.entries(filters).filter(([, value]) => value !== "" && value !== null && value !== undefined)
+        )
+        const query = new URLSearchParams({ ...clean, page: String(page), size: String(size), sort: "name,asc" }).toString()
+        return this.request(`/collection-point?${query}`)
     }
 
     async getCollectionPoint(id) {
