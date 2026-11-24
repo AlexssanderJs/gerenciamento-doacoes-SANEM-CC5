@@ -786,3 +786,62 @@
         font-weight: bold;
     }
 }
+
+@media (max-width: 768px) {
+  .addButton {
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    flex: 0 0 44px;
+    align-self: flex-start;
+    padding: 0;
+  }
+
+  .actionButtons {
+    min-width: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .editButton,
+  .deleteButton,
+  .approveButton,
+  .rejectButton {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    padding: 8px 10px;
+    font-size: 0.85rem;
+    line-height: 1.2;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 600px) {
+  .modalContent {
+    width: calc(100% - 24px);
+    max-width: 560px;
+    max-height: calc(100dvh - 24px);
+    padding: 18px 14px;
+    box-sizing: border-box;
+  }
+  .modalActions {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 8px;
+  }
+  .modalActions > button {
+    flex: 1 1 120px;
+    min-width: 0;
+    max-width: 100%;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+  }
+}
