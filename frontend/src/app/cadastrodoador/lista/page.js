@@ -18,7 +18,10 @@ import { normalizeRole } from "../../../utils/permissions";
 export default function ListaDoadores() {
   const router = useRouter();
   const { showNotification } = useNotification();
-  const isAdmin = normalizeRole(authService.getUser()?.role) === "ADMINISTRATOR";
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    setIsAdmin(normalizeRole(authService.getUser()?.role) === "ADMINISTRATOR");
+  }, []);
   
   // Estados para modais e formulários
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, action: null, message: "", title: "" });

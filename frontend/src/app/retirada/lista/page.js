@@ -32,9 +32,11 @@ export default function ListaRetiradasPage() {
   const [limitInfo, setLimitInfo] = useState(null);
   const [limitInfoStatus, setLimitInfoStatus] = useState("idle");
 
-  const currentUser = authService.getUser();
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  const isAdmin = normalizeRole(currentUser?.role) === "ADMINISTRATOR";
+  useEffect(() => {
+    setIsAdmin(normalizeRole(authService.getUser()?.role) === "ADMINISTRATOR");
+  }, []);
 
   // ==========================================
   // LÓGICA DE FILTROS APRIMORADA

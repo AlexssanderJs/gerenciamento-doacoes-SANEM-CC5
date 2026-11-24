@@ -34,9 +34,13 @@ export default function ListaPontosColeta() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [pageInfo, setPageInfo] = useState({ number: 0, totalPages: 0, totalElements: 0 });
-  const role = normalizeRole(authService.getUser()?.role);
+  const [role, setRole] = useState("");
   const canManage = role === "ADMINISTRATOR" || role === "ATTENDANT";
   const isAdmin = role === "ADMINISTRATOR";
+
+  useEffect(() => {
+    setRole(normalizeRole(authService.getUser()?.role));
+  }, []);
 
   const [filters, setFilters] = useState({ name: "", type: "", neighborhood: "" });
   const [debouncedFilters, setDebouncedFilters] = useState({ name: "", type: "", neighborhood: "" });

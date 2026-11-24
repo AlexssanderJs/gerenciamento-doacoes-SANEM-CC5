@@ -18,7 +18,8 @@ import { normalizeRole } from "../../../utils/permissions"
 
 export default function ListaDoacoesPage() {
     const { showNotification } = useNotification()
-    const isAdmin = normalizeRole(authService.getUser()?.role) === "ADMINISTRATOR"
+    useEffect(() => { setIsAdmin(normalizeRole(authService.getUser()?.role) === "ADMINISTRATOR") }, [])
+    const [isAdmin, setIsAdmin] = useState(false)
 
     const [donations, setDonations] = useState([])
     const [loading, setLoading] = useState(true)

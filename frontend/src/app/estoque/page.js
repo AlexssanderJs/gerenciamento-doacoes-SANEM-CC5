@@ -28,7 +28,10 @@ const initialProductState = {
 
 export default function EstoquePage() {
   const { showNotification } = useNotification();
-  const isAdmin = normalizeRole(authService.getUser()?.role) === "ADMINISTRATOR";
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    setIsAdmin(normalizeRole(authService.getUser()?.role) === "ADMINISTRATOR");
+  }, []);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
